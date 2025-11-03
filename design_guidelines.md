@@ -1,206 +1,238 @@
 # Athar Platform Design Guidelines
 
 ## Design Approach
-**Hybrid Reference-Based**: Drawing from WeChat's social-financial integration, Telegram's clean messaging UI, and Coinbase's trustworthy wallet design. The platform balances social engagement with financial security through clear visual hierarchy and purposeful component design.
+**Hybrid Reference-Based**: Drawing from WeChat's social-financial integration, Telegram's clean messaging UI, Revolut's modern fintech aesthetic, and Coinbase's trustworthy wallet design. The platform features premium glassmorphism effects, gradient accents, and sophisticated visual hierarchy that balances social warmth with financial precision.
 
 ## Core Design Principles
-1. **Dual Personality**: Social features feel warm and inviting; financial features convey trust and precision
-2. **Purple Identity**: Brand color (purple/violet) as primary accent throughout
-3. **Bilingual Excellence**: Seamless Arabic/English support with proper RTL handling
-4. **Security-First**: Visual cues emphasizing safety in all financial transactions
+1. **Premium Minimalism**: Clean, spacious layouts with sophisticated glass effects and gradients
+2. **Gradient Identity**: Multi-color gradient system (teal→purple→pink) as primary visual language
+3. **Glassmorphism**: Frosted glass effects with backdrop blur for modern depth and hierarchy
+4. **Bilingual Excellence**: Seamless Arabic/English support with proper RTL handling
+5. **Trust Through Clarity**: Transparent visual cues emphasizing safety in financial operations
 
 ---
 
 ## Typography System
 
-**Primary Font**: Inter or Cairo (for Arabic support)
-- Hero/Display: Bold, 48-56px (desktop), 32-40px (mobile)
-- Section Headers: Semibold, 32-40px (desktop), 24-28px (mobile)
-- Card Titles: Semibold, 20-24px
-- Body Text: Regular, 16px
-- Small/Meta: Regular, 14px
-- Financial Data: Tabular nums, Medium weight for clarity
+**Primary Fonts**: SF Pro Display / Inter (Latin), Cairo / Tajawal (Arabic)
 
-**Hierarchy Rules**:
-- Wallet balances: Large, bold typography (32-40px)
-- Transaction amounts: Medium weight, tabular figures
-- Chat messages: Regular 16px with sender names at 14px bold
-- Navigation: 14-16px medium weight
+**Scale**:
+- Display/Hero: 56-64px desktop, 36-42px mobile, Weight 700
+- Page Headers: 40-48px desktop, 28-32px mobile, Weight 600
+- Section Titles: 28-32px desktop, 20-24px mobile, Weight 600
+- Card Headers: 20-24px, Weight 600
+- Body: 16px, Weight 400
+- Meta/Small: 14px, Weight 400
+- Financial Data: 24-32px, Weight 500, tabular-nums
+
+**Hierarchy**:
+- Wallet balances: 40-48px bold with subtle gradient text effect
+- Transaction amounts: 28-32px medium, monospaced numerals
+- Currency labels: 14px uppercase tracking-wider
+- Chat messages: 16px regular, sender names 14px semibold
+- Timestamps: 12px light gray
 
 ---
 
-## Layout & Spacing System
+## Color & Gradient System
 
-**Tailwind Units**: Consistently use 2, 4, 6, 8, 12, 16, 20, 24 for spacing
-- Component padding: p-4 to p-8
-- Section spacing: py-12 to py-20
-- Card gaps: gap-4 to gap-6
-- Container max-width: max-w-7xl with px-4
+**Primary Gradient**: Linear teal (#14b8a6) → purple (#a855f7) → pink (#ec4899)
+- Applied to: Primary buttons, active states, balance card accents, navigation indicators
+- Direction: 135deg diagonal
+
+**Background System**:
+- Base: Dark slate (#0f172a) or light (#f8fafc) depending on theme
+- Cards: Semi-transparent white (rgba(255,255,255,0.1) dark / 0.7 light) with backdrop-blur-xl
+- Overlays: rgba(0,0,0,0.4) with backdrop-blur-md
+
+**Accent Colors**:
+- Success: Emerald (#10b981)
+- Warning: Amber (#f59e0b)
+- Danger: Rose (#f43f5e)
+- Info: Sky (#0ea5e9)
+
+**Text Colors**:
+- Primary: Near-black (#1e293b) or white (#f8fafc)
+- Secondary: Slate (#64748b)
+- Muted: Light slate (#cbd5e1)
+
+---
+
+## Layout & Spacing
+
+**Tailwind Units**: 2, 4, 6, 8, 12, 16, 20, 24, 32
+- Component padding: p-6 to p-8
+- Card spacing: p-6
+- Section gaps: py-16 to py-24
+- Grid gaps: gap-6 to gap-8
+- Container: max-w-7xl with px-6
 
 **Grid Patterns**:
-- Desktop wallet cards: 3-column grid (grid-cols-3)
-- Mobile: Single column stacking
-- Chat/social feeds: Single column full-width
-- Store items: 2-4 column responsive grid
+- Wallet overview: 3-column grid (1/2/3 responsive)
+- Transaction history: Single column list with dividers
+- Chat interface: Split view (list 30% / conversation 70%)
+- Store: 4-column grid (1/2/3/4 responsive)
+- Admin tables: Full-width with fixed headers
 
 ---
 
 ## Component Library
 
 ### Navigation
-**Main Menu**: Vertical sidebar (desktop) with purple accent indicators for active items
-- Icon + label for each menu item
-- Collapsible on mobile to hamburger menu
-- Notification badges on relevant items (red dot)
-- User avatar and balance summary at top
+**Sidebar (Desktop)**: Floating glass panel with backdrop blur
+- Width: 280px, semi-transparent white/dark background
+- Active item: Gradient background with subtle glow
+- Icons: 24px with gradient fill on active
+- User section at top: Avatar (56px) with balance summary in glass container
+- Navigation items: Icon + label with 12px spacing, hover scale effect
+
+**Mobile Navigation**: Bottom tab bar with glass effect
+- Fixed bottom, backdrop-blur, 5 primary actions
+- Active tab: Gradient indicator line (4px height)
 
 ### Wallet Interface
-**Balance Cards**: 
-- Large cards showing SYP, USD, ATH balances
-- Each card: Balance amount prominent, currency label, quick action buttons
-- Visual distinction: Different subtle background tints for each currency
 
-**Recipient Address Display**:
-- Monospace font for address codes
-- Copy button with visual feedback
-- QR code generation (large, scannable 200x200px minimum)
-- Share and save options clearly accessible
+**Balance Cards**:
+- Large glass cards (rounded-3xl, backdrop-blur-2xl, border border-white/20)
+- Gradient border accent on hover
+- Currency icon top-left (40px gradient circle)
+- Balance: 48px bold, gradient text
+- Label: 14px uppercase tracking-wide
+- Quick actions: Two icon buttons with glass effect
+- Dimensions: Minimum 320px wide, 180px tall
 
-**Transaction Actions**:
-- Send/Receive toggle tabs
-- QR scanner interface with camera viewfinder overlay
-- Input fields for manual address entry with paste functionality
-- Amount input with currency selector
-- Fee display prominently before confirmation
+**Transaction Flow**:
+- Send/Receive tabs with gradient underline indicator
+- Amount input: Large (32px) with glass container
+- Recipient field: Monospace with copy button (glass effect)
+- QR scanner: Full-screen overlay with frosted edges, central viewfinder
+- Confirmation modal: Glass panel with blur, gradient confirm button
 
-**ATH Trading Section**:
-- Buy/Sell toggle interface
-- Current rate display (large, bold: "1 ATH = 0.001 USD / 11 SYP")
-- Amount calculator with real-time conversion
-- Transfer interface with email/username input
-- Fee structure clearly stated (0.005%, min 100 ATH)
+**ATH Trading Panel**:
+- Current rate display: Large gradient text (40px)
+- Buy/Sell slider toggle with gradient track
+- Amount calculator: Real-time conversion in glass containers
+- Fee structure: Small text in muted color below input
+- Trade button: Full-width gradient with glow effect
 
-### Chat & Social Features
+### Chat & Social
+
 **Chat Rooms**:
-- Message bubbles: Rounded corners (rounded-2xl), sender's messages right-aligned with purple background, received messages left-aligned with neutral gray
-- Timestamp below each message cluster
-- Avatar thumbnails for group chats
-- Input bar: Fixed at bottom, rounded-full input field, send button with icon
+- Message bubbles: Glass effect with backdrop blur
+- Sent messages: Gradient background, right-aligned
+- Received: Semi-transparent gray, left-aligned
+- Bubble radius: rounded-2xl with tail pointer
+- Avatar: 40px circle with gradient ring for active users
+- Input bar: Fixed bottom, glass effect, rounded-full
+- Send button: Gradient circle (48px)
 
 **Voice Rooms**:
-- Participant grid showing avatars
-- Active speaker visual indicator (pulsing ring around avatar)
-- Mute/unmute controls prominent
-- Leave room button clearly accessible
+- Participant grid: Glass cards with avatar (80px)
+- Active speaker: Pulsing gradient ring animation
+- Username below avatar: 14px semibold
+- Controls: Bottom glass panel with mute/leave buttons
+- Background: Subtle gradient overlay
 
 **Match System**:
-- Card-based interface for random matching
-- "Next" and "Connect" action buttons
-- Toggle between chat and voice match modes
+- Card interface: Large glass card (400px wide) with user info
+- Action buttons: Gradient "Connect", outlined "Next"
+- Toggle: Chat/Voice switch with gradient background slider
 
-### User Profile & Settings
-**My Account**:
-- Profile header with avatar, username, email
-- Editable fields for birthday, gender
-- Stats display: Friends count, chat history, wallet activity
+### User Profile
 
-**Settings Panel**:
-- Grouped sections (Account, Privacy, Notifications, Language, Security)
-- Toggle switches for boolean options
-- Dropdown selectors for choices
-- Purple accents for active/selected states
+**Profile Header**:
+- Glass container spanning full width
+- Avatar: 120px with gradient border (4px)
+- Username: 32px bold
+- Email/Bio: 16px muted
+- Stats row: Three glass pills with counts (Friends, Chats, Transactions)
 
-### Store Interface
-- Product grid with images, names, ATH prices
-- Add to cart buttons with quantity selectors
-- Cart summary sidebar/modal
-- Checkout flow integrated with wallet
+**Settings**:
+- Grouped sections in glass cards
+- Toggle switches: Gradient when active
+- Dropdowns: Glass containers with gradient focus ring
+- Save button: Gradient background
+
+### Store
+
+**Product Cards**:
+- Glass effect with hover elevation
+- Product image: Full-width top, rounded-t-2xl
+- Name: 18px semibold
+- Price: 24px bold with ATH label, gradient text
+- Add button: Small gradient pill
+- Grid: 4 columns desktop, 2 mobile
+
+**Cart**:
+- Slide-out glass panel from right
+- Item list with quantity controls
+- Total: Large gradient text
+- Checkout: Full-width gradient button
 
 ### Admin Panel
-**Payment Method Management**:
-- Table view with columns: Currency, Method Name, Icon, Min Deposit/Withdraw, Fees
-- Add/Edit modal forms
-- Enable/disable toggles per method
-- Clear visual separation between deposit and withdrawal methods
 
-**User & Balance Management**:
-- Search and filter interface
-- User list with expandable details
-- Balance adjustment controls with audit logging
-- ATH price setting interface with confirmation
+**Dashboard Cards**:
+- Glass containers with gradient border-top
+- Metric value: 40px bold gradient
+- Label: 14px uppercase
+- Icon: 32px with gradient
 
----
-
-## Visual Treatments
-
-**Cards & Containers**:
-- Subtle shadows (shadow-md to shadow-lg)
-- Rounded corners (rounded-xl to rounded-2xl)
-- Border styling for emphasis where needed
-
-**Buttons**:
-- Primary (purple): CTAs, confirmations, send/buy actions
-- Secondary (outlined): Cancel, back, neutral actions
-- Danger (red): Delete, withdraw, critical actions
-- Icon buttons for compact actions (copy, share, scan)
-
-**States & Feedback**:
-- Loading: Skeleton screens for wallet data, spinners for transactions
-- Success: Green checkmark overlays, toast notifications
-- Error: Red inline messages with clear remediation steps
-- Empty states: Friendly illustrations with helpful CTAs
-
-**QR Codes**:
-- White background with padding
-- Download/share options immediately below
-- Scannable size minimum 200x200px
-- Clear labeling of what the QR represents
+**Data Tables**:
+- Glass container with fixed header
+- Row hover: Subtle gradient background
+- Action buttons: Icon buttons with glass effect
+- Pagination: Glass pills with gradient active state
 
 ---
 
-## Authentication Screens
+## Visual Effects
 
-**Registration**:
-- Clean form layout, single column
-- Field order: Username, Email, Password, Repeat Password, Birthday (date picker), Sex (radio buttons)
-- Visual password strength indicator
-- Terms acceptance checkbox
-- Purple CTA button "Create Account"
+**Glassmorphism**:
+- Background: rgba(255,255,255,0.1) dark mode / rgba(255,255,255,0.7) light
+- Backdrop filter: blur(20px) to blur(40px)
+- Border: 1px solid rgba(255,255,255,0.2)
+- Shadow: Large soft shadows for depth
 
-**Login**:
-- Username/Email single input (smart detection)
-- Password with show/hide toggle
-- "Forgot Password" link
-- Purple "Login" button
-- Option to register below
+**Gradients**:
+- Buttons: 135deg linear gradient
+- Text: Gradient fill on headings and accents
+- Borders: Gradient border on focus/hover states
+- Backgrounds: Subtle radial gradients on large sections
+
+**Elevation**:
+- Cards: shadow-xl with glass effect
+- Modals: shadow-2xl with backdrop blur
+- Dropdowns: shadow-lg
+- Hover states: Increase shadow and subtle scale (1.02)
+
+---
+
+## Authentication
+
+**Login/Register**:
+- Centered glass card (500px max-width)
+- Gradient logo at top (80px)
+- Form fields: Glass inputs with gradient focus ring
+- Submit button: Full-width gradient
+- Links: Gradient text on hover
+- Background: Subtle animated gradient mesh
 
 ---
 
 ## Responsive Behavior
 
-**Desktop (lg+)**: 
-- Sidebar navigation persistent
-- Multi-column layouts for wallet, store
-- Side-by-side chat list and conversation
-
-**Tablet (md)**:
-- Collapsible sidebar
-- 2-column maximum for grids
-- Stack financial summaries
-
-**Mobile (base)**:
-- Bottom navigation bar for main actions
-- Single column throughout
-- Full-width cards
-- Swipe gestures for navigation
+**Desktop (1024px+)**: Sidebar + content area, multi-column grids
+**Tablet (768px)**: Collapsible sidebar, 2-column max
+**Mobile (<768px)**: Bottom navigation, single column, full-width cards
 
 ---
 
 ## Images & Assets
 
-**Icons**: Font Awesome or Heroicons via CDN for consistency
-**QR Codes**: Generated via library (qrcode.js or similar)
-**Avatars**: User uploads with placeholder defaults (purple gradient circles with initials)
-**Store Products**: Placeholder images or admin-uploaded product photos
+**Icons**: Heroicons via CDN, gradient fill for active states
+**Avatars**: User uploads, placeholder: gradient circles with initials (48px default)
+**QR Codes**: Generated via qrcode.js, displayed in glass container (240x240px)
+**Product Images**: Admin uploads, 1:1 ratio preferred
+**Background**: Subtle animated gradient mesh for auth screens
 
-**No large hero image** - This is a web application dashboard, not a marketing site. Focus on functional interfaces and data presentation.
+**No Hero Image**: This is a dashboard application focused on functional interfaces with premium glassmorphism aesthetic, not a marketing landing page.

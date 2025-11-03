@@ -37,27 +37,29 @@ function Router() {
 
 export default function App() {
   const style = {
-    "--sidebar-width": "16rem",
-    "--sidebar-width-icon": "3rem",
+    "--sidebar-width": "18rem",
+    "--sidebar-width-icon": "4rem",
   };
 
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <SidebarProvider style={style as React.CSSProperties}>
-          <div className="flex h-screen w-full">
-            <AppSidebar />
-            <div className="flex flex-col flex-1 min-w-0">
-              <header className="flex items-center justify-between p-4 border-b">
-                <SidebarTrigger data-testid="button-sidebar-toggle" />
-                <ThemeToggle />
-              </header>
-              <main className="flex-1 overflow-auto p-6">
-                <Router />
-              </main>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/40 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+          <SidebarProvider style={style as React.CSSProperties}>
+            <div className="flex h-screen w-full">
+              <AppSidebar />
+              <div className="flex flex-col flex-1 min-w-0">
+                <header className="flex items-center justify-between p-4 backdrop-blur-xl bg-white/50 dark:bg-white/5 border-b border-white/20 dark:border-white/10">
+                  <SidebarTrigger data-testid="button-sidebar-toggle" className="hover:bg-white/50 dark:hover:bg-white/10 rounded-xl" />
+                  <ThemeToggle />
+                </header>
+                <main className="flex-1 overflow-auto p-8">
+                  <Router />
+                </main>
+              </div>
             </div>
-          </div>
-        </SidebarProvider>
+          </SidebarProvider>
+        </div>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>

@@ -31,27 +31,33 @@ export default function ChatMessage({
       )}
       data-testid={`message-${isSelf ? 'self' : 'other'}`}
     >
-      <Avatar className="h-8 w-8">
-        <AvatarImage src={avatarUrl} alt={sender} />
-        <AvatarFallback className="bg-primary/10 text-primary text-xs">
-          {initials}
-        </AvatarFallback>
-      </Avatar>
-      <div className={cn("flex flex-col", isSelf && "items-end")}>
+      <div className="relative">
+        <Avatar className="h-10 w-10 ring-2 ring-white/20">
+          <AvatarImage src={avatarUrl} alt={sender} />
+          <AvatarFallback className="gradient-primary text-white text-sm font-semibold">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
         {!isSelf && (
-          <div className="text-sm font-medium mb-1">{sender}</div>
+          <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-background" />
+        )}
+      </div>
+      
+      <div className={cn("flex flex-col max-w-xs", isSelf && "items-end")}>
+        {!isSelf && (
+          <div className="text-sm font-semibold mb-1 px-1">{sender}</div>
         )}
         <div
           className={cn(
-            "rounded-2xl px-4 py-2 max-w-xs break-words",
+            "rounded-2xl px-4 py-3 break-words backdrop-blur-xl shadow-lg",
             isSelf
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-foreground"
+              ? "gradient-primary text-white rounded-tr-sm"
+              : "bg-white/70 dark:bg-white/5 text-foreground border border-white/20 dark:border-white/10 rounded-tl-sm"
           )}
         >
-          {message}
+          <p className="text-sm leading-relaxed">{message}</p>
         </div>
-        <div className="text-xs text-muted-foreground mt-1">{timestamp}</div>
+        <div className="text-xs text-muted-foreground mt-1 px-1">{timestamp}</div>
       </div>
     </div>
   );

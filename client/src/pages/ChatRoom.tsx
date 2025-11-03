@@ -39,14 +39,14 @@ export default function ChatRoom() {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="mb-4">
-        <h1 className="text-3xl font-bold mb-2">Chat Room</h1>
-        <p className="text-muted-foreground">Connect with the community</p>
+    <div className="h-full flex flex-col max-w-4xl">
+      <div className="mb-6">
+        <h1 className="text-5xl font-bold gradient-text mb-3">Chat Room</h1>
+        <p className="text-muted-foreground text-lg">Connect with the community</p>
       </div>
 
-      <Card className="flex-1 flex flex-col min-h-0">
-        <ScrollArea className="flex-1 p-6">
+      <Card className="flex-1 flex flex-col min-h-0 rounded-3xl border-white/20 dark:border-white/10 backdrop-blur-xl bg-white/70 dark:bg-white/5 shadow-xl overflow-hidden">
+        <ScrollArea className="flex-1 p-8">
           {messages.map((msg) => (
             <ChatMessage
               key={msg.id}
@@ -58,17 +58,18 @@ export default function ChatRoom() {
           ))}
         </ScrollArea>
 
-        <div className="p-4 border-t">
-          <div className="flex gap-2">
+        <div className="p-6 border-t border-white/20 dark:border-white/10 backdrop-blur-xl bg-white/30 dark:bg-white/5">
+          <div className="flex gap-3">
             <Input
               placeholder="Type a message..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyPress={handleKeyPress}
+              className="rounded-full bg-white/50 dark:bg-white/5 backdrop-blur-sm border-white/20 text-base px-6"
               data-testid="input-chat-message"
             />
-            <Button onClick={handleSend} data-testid="button-send-message">
-              <Send className="h-4 w-4" />
+            <Button onClick={handleSend} className="rounded-full h-12 w-12 p-0 gradient-primary text-white shadow-lg" data-testid="button-send-message">
+              <Send className="h-5 w-5" />
             </Button>
           </div>
         </div>

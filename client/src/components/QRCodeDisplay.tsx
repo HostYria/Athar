@@ -35,30 +35,44 @@ export default function QRCodeDisplay({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">{title}</CardTitle>
+    <Card className="rounded-3xl border-white/20 dark:border-white/10 backdrop-blur-xl bg-white/70 dark:bg-white/5 shadow-xl overflow-hidden">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl gradient-text">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex justify-center p-4 bg-background rounded-lg">
+      <CardContent className="space-y-6">
+        <div className="flex justify-center p-6 bg-white rounded-2xl shadow-inner">
           <QRCode value={address} size={200} />
         </div>
-        <div className="space-y-2">
-          <div className="font-mono text-sm bg-muted p-3 rounded-md break-all" data-testid="text-address">
+        <div className="space-y-3">
+          <div className="font-mono text-sm bg-white/50 dark:bg-white/5 backdrop-blur-sm p-4 rounded-xl border border-white/20 dark:border-white/10 break-all" data-testid="text-address">
             {address}
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <Button size="sm" variant="outline" onClick={handleCopy} data-testid="button-copy-address">
-              <Copy className="h-4 w-4 mr-1" />
-              Copy
+          <div className="grid grid-cols-3 gap-2">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="rounded-full backdrop-blur-sm bg-background/50 border-white/20" 
+              onClick={handleCopy} 
+              data-testid="button-copy-address"
+            >
+              <Copy className="h-4 w-4" />
             </Button>
-            <Button size="sm" variant="outline" onClick={handleShare} data-testid="button-share-address">
-              <Share2 className="h-4 w-4 mr-1" />
-              Share
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="rounded-full backdrop-blur-sm bg-background/50 border-white/20" 
+              onClick={handleShare} 
+              data-testid="button-share-address"
+            >
+              <Share2 className="h-4 w-4" />
             </Button>
-            <Button size="sm" variant="outline" data-testid="button-save-qr">
-              <Download className="h-4 w-4 mr-1" />
-              Save QR
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="rounded-full backdrop-blur-sm bg-background/50 border-white/20" 
+              data-testid="button-save-qr"
+            >
+              <Download className="h-4 w-4" />
             </Button>
           </div>
         </div>

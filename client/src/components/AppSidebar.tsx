@@ -23,6 +23,7 @@ import {
   MessageCircle,
   Wallet,
   Store,
+  Sparkles,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -50,22 +51,23 @@ export default function AppSidebar() {
   const [location] = useLocation();
 
   return (
-    <Sidebar>
-      <SidebarHeader className="p-4">
+    <Sidebar className="border-r border-white/20 dark:border-white/10 backdrop-blur-xl bg-white/70 dark:bg-white/5">
+      <SidebarHeader className="p-6">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-lg font-bold text-primary-foreground">A</span>
+          <div className="h-12 w-12 rounded-2xl gradient-primary flex items-center justify-center shadow-lg relative overflow-hidden">
+            <Sparkles className="h-6 w-6 text-white" />
+            <div className="absolute inset-0 bg-white/20 animate-pulse" />
           </div>
           <div>
-            <h2 className="font-bold text-lg">Athar</h2>
+            <h2 className="font-bold text-xl gradient-text">Athar</h2>
             <p className="text-xs text-muted-foreground">منصة أثر</p>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="px-3">
         <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">Main</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -73,11 +75,12 @@ export default function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={location === item.url}
+                    className={location === item.url ? "gradient-primary text-white shadow-lg" : ""}
                     data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
                   >
-                    <Link href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                    <Link href={item.url} className="rounded-xl">
+                      <item.icon className="h-5 w-5" />
+                      <span className="font-medium">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -87,7 +90,7 @@ export default function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Personal</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">Personal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {personalItems.map((item) => (
@@ -95,11 +98,12 @@ export default function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={location === item.url}
+                    className={location === item.url ? "gradient-primary text-white shadow-lg" : ""}
                     data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
                   >
-                    <Link href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                    <Link href={item.url} className="rounded-xl">
+                      <item.icon className="h-5 w-5" />
+                      <span className="font-medium">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -109,7 +113,7 @@ export default function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>More</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">More</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {otherItems.map((item) => (
@@ -117,11 +121,12 @@ export default function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={location === item.url}
+                    className={location === item.url ? "gradient-primary text-white shadow-lg" : ""}
                     data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
                   >
-                    <Link href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                    <Link href={item.url} className="rounded-xl">
+                      <item.icon className="h-5 w-5" />
+                      <span className="font-medium">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -132,15 +137,15 @@ export default function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4">
-        <div className="flex items-center gap-3 p-2 rounded-lg bg-sidebar-accent">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+        <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/50 dark:bg-white/5 backdrop-blur-sm border border-white/20 dark:border-white/10">
+          <Avatar className="h-10 w-10 ring-2 ring-white/30">
+            <AvatarFallback className="gradient-primary text-white font-semibold">
               JD
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">John Doe</p>
-            <p className="text-xs text-muted-foreground truncate">@johndoe</p>
+            <p className="text-sm font-semibold truncate">John Doe</p>
+            <p className="text-xs text-muted-foreground truncate">15,250 ATH</p>
           </div>
         </div>
       </SidebarFooter>
