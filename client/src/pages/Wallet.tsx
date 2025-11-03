@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,13 +17,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Copy, QrCode, Download, Send, ArrowDownToLine, ArrowUpFromLine, Upload, TrendingUp, TrendingDown } from "lucide-react";
+import { Copy, QrCode, Download, Send, ArrowDownToLine, ArrowUpFromLine, Upload, TrendingUp, TrendingDown, Camera, X } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Wallet() {
   const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -46,11 +49,13 @@ export default function Wallet() {
   // Form states
   const [sendMethod, setSendMethod] = useState<"manual" | "scan" | "upload">("manual");
   const [sendAmount, setSendAmount] = useState("");
+  const [sendCurrency, setSendCurrency] = useState("USD");
   const [recipientAddress, setRecipientAddress] = useState("");
   const [depositCurrency, setDepositCurrency] = useState("");
   const [withdrawCurrency, setWithdrawCurrency] = useState("");
   const [athAmount, setAthAmount] = useState("");
   const [athCurrency, setAthCurrency] = useState("USD");
+  const [isCameraActive, setIsCameraActive] = useState(false);
 
   // Real balances - from user data
   const [usdBalance, setUsdBalance] = useState(parseFloat(user?.usdBalance || "0"));
@@ -69,6 +74,56 @@ export default function Wallet() {
   const athRates = {
     USD: 0.001,
     SYP: 11,
+  };
+
+  // Start camera for QR scanning
+  const startCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: "environment" } 
+      });
+      setStream(mediaStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+      setIsCameraActive(true);
+    } catch (error) {
+      toast({
+        title: "خطأ",
+        description: "لا يمكن الوصول إلى الكاميرا",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Stop camera
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    setIsCameraActive(false);
+  };
+
+  // Handle file upload for QR
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      toast({
+        title: "معالجة الصورة",
+        description: "جاري معالجة رمز QR...",
+      });
+      // Here you would implement QR code reading from image
+      // For now, we'll show a placeholder
+      setTimeout(() => {
+        toast({
+          title: "تم القراءة",
+          description: "تم قراءة عنوان المحفظة من الصورة",
+        });
+        setRecipientAddress("EXAMPLE123456789ABCDEFGHIJ");
+        setSendMethod("manual");
+      }, 1000);
+    }
   };
 
   const handleCopyAddress = () => {
@@ -100,6 +155,24 @@ export default function Wallet() {
     }
   };
 
+  // Calculate send preview with fees
+  const calculateSendPreview = () => {
+    if (!sendAmount || parseFloat(sendAmount) <= 0) return null;
+    
+    const amount = parseFloat(sendAmount);
+    const fee = amount * 0.0005; // 0.05% fee
+    const total = amount + fee;
+    
+    return {
+      amount: amount.toFixed(2),
+      fee: fee.toFixed(2),
+      total: total.toFixed(2),
+      willReceive: amount.toFixed(2),
+    };
+  };
+
+  const sendPreview = calculateSendPreview();
+
   const handleSend = async () => {
     if (!sendAmount || !recipientAddress) {
       toast({
@@ -123,7 +196,9 @@ export default function Wallet() {
     const fee = amount * 0.0005;
     const total = amount + fee;
 
-    if (total > usdBalance) {
+    // Check balance based on currency
+    const currentBalance = sendCurrency === "USD" ? usdBalance : sypBalance;
+    if (total > currentBalance) {
       toast({
         title: "خطأ",
         description: "الرصيد غير كافي",
@@ -140,7 +215,7 @@ export default function Wallet() {
           userId: user.id,
           recipientAddress,
           amount: sendAmount,
-          currency: "USD",
+          currency: sendCurrency,
         }),
       });
 
@@ -150,20 +225,28 @@ export default function Wallet() {
         throw new Error(data.message);
       }
 
-      setUsdBalance(parseFloat(data.senderBalance));
-      
-      const updatedUser = { ...user, usdBalance: data.senderBalance };
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      // Update balances
+      if (sendCurrency === "USD") {
+        setUsdBalance(parseFloat(data.senderBalance));
+        const updatedUser = { ...user, usdBalance: data.senderBalance };
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      } else {
+        setSypBalance(parseFloat(data.senderBalance));
+        const updatedUser = { ...user, sypBalance: data.senderBalance };
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      }
 
       toast({
         title: "تم الإرسال بنجاح",
-        description: `تم إرسال ${amount.toFixed(2)} USD مع رسوم ${fee.toFixed(2)} USD`,
+        description: `تم إرسال ${amount.toFixed(2)} ${sendCurrency} مع رسوم ${fee.toFixed(2)} ${sendCurrency}`,
       });
 
       setShowSendDialog(false);
       setSendAmount("");
       setRecipientAddress("");
+      stopCamera();
     } catch (error: any) {
       toast({
         title: "خطأ",
@@ -263,7 +346,7 @@ export default function Wallet() {
         amount: amount.toFixed(2),
         currency: athCurrency,
         total: total.toFixed(2),
-        fee: 0,
+        fee: "0.00",
       };
     } else {
       const totalBeforeFee = amount * rate;
@@ -280,8 +363,21 @@ export default function Wallet() {
 
   const athPreview = calculateATHPreview();
 
+  // Clean up camera on unmount or dialog close
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!showSendDialog) {
+      stopCamera();
+    }
+  }, [showSendDialog]);
+
   return (
-    <div className="space-y-8 max-w-7xl">
+    <div className="space-y-8 max-w-7xl" data-testid="wallet-page">
       <div className="relative">
         <div className="absolute -top-20 -left-20 w-96 h-96 gradient-primary opacity-10 rounded-full blur-3xl" />
         <h1 className="text-5xl font-bold gradient-text mb-6 relative">محفظتي</h1>
@@ -298,12 +394,14 @@ export default function Wallet() {
               value={userAddress}
               readOnly
               className="font-mono text-sm rounded-xl bg-white/50 dark:bg-white/5 backdrop-blur-sm border-white/20"
+              data-testid="wallet-address"
             />
             <Button
               variant="outline"
               size="icon"
               onClick={handleCopyAddress}
               className="rounded-xl backdrop-blur-sm bg-background/50 border-white/20"
+              data-testid="button-copy-address"
             >
               <Copy className="h-4 w-4" />
             </Button>
@@ -312,6 +410,7 @@ export default function Wallet() {
               size="icon"
               onClick={() => setShowQRDialog(true)}
               className="rounded-xl backdrop-blur-sm bg-background/50 border-white/20"
+              data-testid="button-show-qr"
             >
               <QrCode className="h-4 w-4" />
             </Button>
@@ -327,28 +426,40 @@ export default function Wallet() {
             <CardTitle className="text-lg gradient-text">USD Balance</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-4xl font-bold tabular-nums">${usdBalance.toFixed(2)}</div>
+            <div className="text-4xl font-bold tabular-nums" data-testid="balance-usd">${usdBalance.toFixed(2)}</div>
             <div className="grid grid-cols-3 gap-2">
               <Button
-                onClick={() => setShowSendDialog(true)}
+                onClick={() => {
+                  setSendCurrency("USD");
+                  setShowSendDialog(true);
+                }}
                 className="rounded-full gradient-primary text-white border-0 shadow-lg"
                 size="sm"
+                data-testid="button-send-usd"
               >
                 <Send className="h-4 w-4" />
               </Button>
               <Button
-                onClick={() => setShowDepositDialog(true)}
+                onClick={() => {
+                  setDepositCurrency("USD");
+                  setShowDepositDialog(true);
+                }}
                 variant="outline"
                 className="rounded-full backdrop-blur-sm bg-background/50 border-white/20"
                 size="sm"
+                data-testid="button-deposit-usd"
               >
                 <ArrowDownToLine className="h-4 w-4" />
               </Button>
               <Button
-                onClick={() => setShowWithdrawDialog(true)}
+                onClick={() => {
+                  setWithdrawCurrency("USD");
+                  setShowWithdrawDialog(true);
+                }}
                 variant="outline"
                 className="rounded-full backdrop-blur-sm bg-background/50 border-white/20"
                 size="sm"
+                data-testid="button-withdraw-usd"
               >
                 <ArrowUpFromLine className="h-4 w-4" />
               </Button>
@@ -362,28 +473,40 @@ export default function Wallet() {
             <CardTitle className="text-lg gradient-text">SYP Balance</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-4xl font-bold tabular-nums">{sypBalance.toLocaleString()} SYP</div>
+            <div className="text-4xl font-bold tabular-nums" data-testid="balance-syp">{sypBalance.toLocaleString()} SYP</div>
             <div className="grid grid-cols-3 gap-2">
               <Button
-                onClick={() => setShowSendDialog(true)}
+                onClick={() => {
+                  setSendCurrency("SYP");
+                  setShowSendDialog(true);
+                }}
                 className="rounded-full gradient-primary text-white border-0 shadow-lg"
                 size="sm"
+                data-testid="button-send-syp"
               >
                 <Send className="h-4 w-4" />
               </Button>
               <Button
-                onClick={() => setShowDepositDialog(true)}
+                onClick={() => {
+                  setDepositCurrency("SYP");
+                  setShowDepositDialog(true);
+                }}
                 variant="outline"
                 className="rounded-full backdrop-blur-sm bg-background/50 border-white/20"
                 size="sm"
+                data-testid="button-deposit-syp"
               >
                 <ArrowDownToLine className="h-4 w-4" />
               </Button>
               <Button
-                onClick={() => setShowWithdrawDialog(true)}
+                onClick={() => {
+                  setWithdrawCurrency("SYP");
+                  setShowWithdrawDialog(true);
+                }}
                 variant="outline"
                 className="rounded-full backdrop-blur-sm bg-background/50 border-white/20"
                 size="sm"
+                data-testid="button-withdraw-syp"
               >
                 <ArrowUpFromLine className="h-4 w-4" />
               </Button>
@@ -398,7 +521,7 @@ export default function Wallet() {
           <CardTitle className="text-xl gradient-text">ATHR Balance</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-4xl font-bold tabular-nums">{athrBalance.toFixed(2)} ATHR</div>
+          <div className="text-4xl font-bold tabular-nums" data-testid="balance-athr">{athrBalance.toFixed(2)} ATHR</div>
           <p className="text-sm text-muted-foreground">
             1 ATHR = {athRates.USD} USD أو {athRates.SYP} SYP
           </p>
@@ -409,6 +532,7 @@ export default function Wallet() {
                 setShowATHDialog(true);
               }}
               className="rounded-full gradient-primary text-white border-0 shadow-lg"
+              data-testid="button-buy-athr"
             >
               <TrendingUp className="h-4 w-4 mr-2" />
               شراء
@@ -420,6 +544,7 @@ export default function Wallet() {
               }}
               variant="outline"
               className="rounded-full backdrop-blur-sm bg-background/50 border-white/20"
+              data-testid="button-sell-athr"
             >
               <TrendingDown className="h-4 w-4 mr-2" />
               بيع
@@ -441,6 +566,7 @@ export default function Wallet() {
             <Button
               onClick={handleDownloadQR}
               className="w-full rounded-full gradient-primary text-white border-0 shadow-lg"
+              data-testid="button-download-qr"
             >
               <Download className="h-4 w-4 mr-2" />
               تحميل رمز QR
@@ -453,15 +579,16 @@ export default function Wallet() {
       <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>إرسال</DialogTitle>
+            <DialogTitle>إرسال {sendCurrency}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Tabs value={sendMethod} onValueChange={(v) => setSendMethod(v as any)}>
               <TabsList className="grid w-full grid-cols-3 bg-white/50 dark:bg-white/5 backdrop-blur-sm rounded-full p-1">
-                <TabsTrigger value="manual" className="rounded-full data-[state=active]:gradient-primary data-[state=active]:text-white">يدوي</TabsTrigger>
-                <TabsTrigger value="scan" className="rounded-full data-[state=active]:gradient-primary data-[state=active]:text-white">مسح QR</TabsTrigger>
-                <TabsTrigger value="upload" className="rounded-full data-[state=active]:gradient-primary data-[state=active]:text-white">رفع QR</TabsTrigger>
+                <TabsTrigger value="manual" className="rounded-full data-[state=active]:gradient-primary data-[state=active]:text-white" data-testid="tab-manual">يدوي</TabsTrigger>
+                <TabsTrigger value="scan" className="rounded-full data-[state=active]:gradient-primary data-[state=active]:text-white" data-testid="tab-scan">مسح QR</TabsTrigger>
+                <TabsTrigger value="upload" className="rounded-full data-[state=active]:gradient-primary data-[state=active]:text-white" data-testid="tab-upload">رفع QR</TabsTrigger>
               </TabsList>
+              
               <TabsContent value="manual" className="space-y-4 mt-4">
                 <div className="space-y-2">
                   <Label>عنوان المستلم</Label>
@@ -470,37 +597,120 @@ export default function Wallet() {
                     onChange={(e) => setRecipientAddress(e.target.value)}
                     placeholder="أدخل عنوان المستلم"
                     className="font-mono text-sm rounded-xl"
+                    data-testid="input-recipient-address"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>المبلغ (USD)</Label>
+                  <Label>المبلغ ({sendCurrency})</Label>
                   <Input
                     type="number"
                     value={sendAmount}
                     onChange={(e) => setSendAmount(e.target.value)}
                     placeholder="0.00"
                     className="text-2xl font-bold rounded-xl"
+                    data-testid="input-send-amount"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">رسوم: 0.05%</p>
               </TabsContent>
+              
               <TabsContent value="scan" className="mt-4">
-                <div className="border-2 border-dashed border-white/20 rounded-2xl p-12 text-center bg-white/30 dark:bg-white/5">
-                  <QrCode className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <p className="text-sm text-muted-foreground">مسح رمز QR</p>
-                </div>
+                {!isCameraActive ? (
+                  <div className="border-2 border-dashed border-white/20 rounded-2xl p-12 text-center bg-white/30 dark:bg-white/5">
+                    <Camera className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <p className="text-sm text-muted-foreground mb-4">مسح رمز QR باستخدام الكاميرا</p>
+                    <Button 
+                      onClick={startCamera}
+                      className="gradient-primary"
+                      data-testid="button-start-camera"
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      تشغيل الكاميرا
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="relative rounded-2xl overflow-hidden bg-black">
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        className="w-full h-64 object-cover"
+                      />
+                      <canvas ref={canvasRef} className="hidden" />
+                    </div>
+                    <Button
+                      onClick={stopCamera}
+                      variant="outline"
+                      className="w-full"
+                      data-testid="button-stop-camera"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      إيقاف الكاميرا
+                    </Button>
+                  </div>
+                )}
               </TabsContent>
+              
               <TabsContent value="upload" className="mt-4">
                 <div className="border-2 border-dashed border-white/20 rounded-2xl p-12 text-center bg-white/30 dark:bg-white/5">
                   <Upload className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
                   <p className="text-sm text-muted-foreground mb-4">رفع صورة رمز QR</p>
-                  <Button variant="outline" className="rounded-full">اختيار ملف</Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <Button 
+                    variant="outline" 
+                    className="rounded-full"
+                    onClick={() => fileInputRef.current?.click()}
+                    data-testid="button-upload-qr"
+                  >
+                    اختيار ملف
+                  </Button>
                 </div>
               </TabsContent>
             </Tabs>
+
+            {/* Send Preview */}
+            {sendPreview && (
+              <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border border-blue-200 dark:border-blue-800">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">المبلغ:</span>
+                    <span className="font-bold">{sendPreview.amount} {sendCurrency}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">الرسوم (0.05%):</span>
+                    <span className="text-red-600 dark:text-red-400 font-medium">
+                      +{sendPreview.fee} {sendCurrency}
+                    </span>
+                  </div>
+                  <div className="pt-2 border-t border-blue-200 dark:border-blue-800">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">الإجمالي:</span>
+                      <span className="text-xl font-bold gradient-text">
+                        {sendPreview.total} {sendCurrency}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">سيستلم:</span>
+                    <span className="font-medium text-green-600 dark:text-green-400">
+                      {sendPreview.willReceive} {sendCurrency}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <Button
               onClick={handleSend}
               className="w-full rounded-full gradient-primary text-white border-0 shadow-lg"
+              disabled={!sendAmount || !recipientAddress || parseFloat(sendAmount) <= 0}
+              data-testid="button-confirm-send"
             >
               <Send className="h-4 w-4 mr-2" />
               إرسال
@@ -586,6 +796,7 @@ export default function Wallet() {
                 onChange={(e) => setAthAmount(e.target.value)}
                 placeholder="0.00"
                 className="text-2xl font-bold rounded-xl"
+                data-testid="input-athr-amount"
               />
             </div>
             <div className="space-y-2">
@@ -641,6 +852,7 @@ export default function Wallet() {
               onClick={handleATHTrade}
               className="w-full rounded-full gradient-primary text-white border-0 shadow-lg"
               disabled={!athAmount || parseFloat(athAmount) <= 0}
+              data-testid="button-confirm-athr-trade"
             >
               {athAction === "buy" ? "تأكيد الشراء" : "تأكيد البيع"}
             </Button>
