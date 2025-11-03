@@ -20,6 +20,7 @@ import {
 import { Copy, QrCode, Download, Send, ArrowDownToLine, ArrowUpFromLine, Upload, TrendingUp, TrendingDown, Camera, X } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useToast } from "@/hooks/use-toast";
+import jsQR from "jsqr";
 
 export default function Wallet() {
   const [user, setUser] = useState<any>(null);
@@ -28,6 +29,7 @@ export default function Wallet() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [scanInterval, setScanInterval] = useState<NodeJS.Timeout | null>(null);
   
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -76,6 +78,34 @@ export default function Wallet() {
     SYP: 11,
   };
 
+  // Scan QR code from video
+  const scanQRCode = () => {
+    if (videoRef.current && canvasRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      const context = canvas.getContext("2d");
+      
+      if (context) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        
+        if (code) {
+          setRecipientAddress(code.data);
+          setSendMethod("manual");
+          stopCamera();
+          toast({
+            title: "تم المسح بنجاح",
+            description: "تم قراءة عنوان المحفظة",
+          });
+        }
+      }
+    }
+  };
+
   // Start camera for QR scanning
   const startCamera = async () => {
     try {
@@ -85,8 +115,13 @@ export default function Wallet() {
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        videoRef.current.play();
       }
       setIsCameraActive(true);
+      
+      // Start scanning interval
+      const interval = setInterval(scanQRCode, 300);
+      setScanInterval(interval);
     } catch (error) {
       toast({
         title: "خطأ",
@@ -102,6 +137,10 @@ export default function Wallet() {
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
+    if (scanInterval) {
+      clearInterval(scanInterval);
+      setScanInterval(null);
+    }
     setIsCameraActive(false);
   };
 
@@ -113,16 +152,43 @@ export default function Wallet() {
         title: "معالجة الصورة",
         description: "جاري معالجة رمز QR...",
       });
-      // Here you would implement QR code reading from image
-      // For now, we'll show a placeholder
-      setTimeout(() => {
-        toast({
-          title: "تم القراءة",
-          description: "تم قراءة عنوان المحفظة من الصورة",
-        });
-        setRecipientAddress("EXAMPLE123456789ABCDEFGHIJ");
-        setSendMethod("manual");
-      }, 1000);
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          if (canvasRef.current) {
+            const canvas = canvasRef.current;
+            const context = canvas.getContext("2d");
+            
+            if (context) {
+              canvas.width = img.width;
+              canvas.height = img.height;
+              context.drawImage(img, 0, 0);
+              
+              const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+              const code = jsQR(imageData.data, imageData.width, imageData.height);
+              
+              if (code) {
+                setRecipientAddress(code.data);
+                setSendMethod("manual");
+                toast({
+                  title: "تم القراءة",
+                  description: "تم قراءة عنوان المحفظة من الصورة",
+                });
+              } else {
+                toast({
+                  title: "خطأ",
+                  description: "لم يتم العثور على رمز QR في الصورة",
+                  variant: "destructive",
+                });
+              }
+            }
+          }
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
     }
   };
 
