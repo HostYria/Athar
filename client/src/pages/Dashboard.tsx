@@ -15,15 +15,13 @@ import {
   DollarSign,
   Activity,
   Bell,
-  Gift,
-  Zap,
-  Clock
+  Zap
 } from "lucide-react";
 import { Link } from "wouter";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function Dashboard() {
-  const { user: currentUser, isLoading } = useCurrentUser();
+  const { user: currentUser } = useCurrentUser();
 
   const sections = [
     {
@@ -86,39 +84,6 @@ export default function Dashboard() {
     }
   ];
 
-  const formatBalance = (balance: string | null | undefined) => {
-    if (!balance) return "0";
-    const num = parseFloat(balance);
-    return num.toLocaleString('en-US', { maximumFractionDigits: 2 });
-  };
-
-  const recentActivities = [
-    {
-      id: 1,
-      icon: Gift,
-      title: "مكافأة تسجيل الدخول",
-      description: "حصلت على 50 ATHR",
-      time: "منذ 5 دقائق",
-      color: "text-green-500"
-    },
-    {
-      id: 2,
-      icon: MessageSquare,
-      title: "رسالة جديدة",
-      description: "لديك رسالة جديدة من صديق",
-      time: "منذ 15 دقيقة",
-      color: "text-blue-500"
-    },
-    {
-      id: 3,
-      icon: Users,
-      title: "صديق جديد",
-      description: "أحمد أصبح صديقك",
-      time: "منذ ساعة",
-      color: "text-purple-500"
-    }
-  ];
-
   return (
     <div className="space-y-8 pb-8" data-testid="dashboard-container">
       {/* Header Section */}
@@ -133,36 +98,6 @@ export default function Dashboard() {
         </h1>
         <p className="text-muted-foreground text-lg">استكشف منصة أثر واستمتع بالميزات المتنوعة</p>
       </div>
-
-      {/* Wallet Summary Card */}
-      <Card className="glass-card border-white/20 dark:border-white/10 overflow-hidden">
-        <div className="gradient-primary p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-sm opacity-90 mb-1">محفظتي</p>
-              <h2 className="text-3xl font-bold">رصيدك الكلي</h2>
-            </div>
-            <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-              <Wallet className="h-8 w-8" />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-4 mt-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4" data-testid="balance-athr">
-              <p className="text-xs opacity-80 mb-1">ATHR</p>
-              <p className="text-2xl font-bold">{isLoading ? "..." : formatBalance(currentUser?.athrBalance)}</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4" data-testid="balance-usd">
-              <p className="text-xs opacity-80 mb-1">USD</p>
-              <p className="text-2xl font-bold">{isLoading ? "..." : formatBalance(currentUser?.usdBalance)}</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4" data-testid="balance-syp">
-              <p className="text-xs opacity-80 mb-1">SYP</p>
-              <p className="text-2xl font-bold">{isLoading ? "..." : formatBalance(currentUser?.sypBalance)}</p>
-            </div>
-          </div>
-        </div>
-      </Card>
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -233,6 +168,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      {/* Main Sections and Tips Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Sections Grid */}
         <div className="lg:col-span-2 space-y-6">
@@ -318,48 +254,8 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Recent Activities */}
+        {/* Tips Card */}
         <div className="space-y-6">
-          <Card className="glass-card border-white/20 dark:border-white/10">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-blue-500" />
-                النشاط الأخير
-              </CardTitle>
-              <CardDescription>آخر الأحداث والإشعارات</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentActivities.map((activity) => (
-                  <div 
-                    key={activity.id} 
-                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
-                    data-testid={`activity-${activity.id}`}
-                  >
-                    <div className={`h-10 w-10 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center flex-shrink-0 ${activity.color}`}>
-                      <activity.icon className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">{activity.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">{activity.description}</p>
-                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {activity.time}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Link href="/notifications">
-                <Button variant="ghost" className="w-full mt-4" data-testid="button-view-all-activities">
-                  عرض كل النشاطات
-                  <ArrowRight className="h-4 w-4 mr-2" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* Tips Card */}
           <Card className="glass-card border-white/20 dark:border-white/10 bg-gradient-to-br from-purple-500/10 to-pink-500/10">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
