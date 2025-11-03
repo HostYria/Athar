@@ -62,23 +62,34 @@ export default function AppSidebar() {
     const handleStorageChange = () => {
       const userData = localStorage.getItem("user");
       if (userData) {
-        setUser(JSON.parse(userData));
+        try {
+          setUser(JSON.parse(userData));
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+        }
       }
     };
 
     // الاستماع لتغييرات localStorage
     window.addEventListener("storage", handleStorageChange);
 
-    // التحقق من التحديثات كل 500ms
+    // التحقق من التحديثات كل 300ms لتحديث أسرع
     const interval = setInterval(() => {
       const userData = localStorage.getItem("user");
       if (userData) {
-        const newUser = JSON.parse(userData);
-        if (JSON.stringify(newUser) !== JSON.stringify(user)) {
-          setUser(newUser);
+        try {
+          const newUser = JSON.parse(userData);
+          // التحقق من تغيير رصيد ATHR بشكل خاص
+          if (user?.athrBalance !== newUser.athrBalance || 
+              user?.usdBalance !== newUser.usdBalance || 
+              user?.sypBalance !== newUser.sypBalance) {
+            setUser(newUser);
+          }
+        } catch (error) {
+          console.error("Error parsing user data:", error);
         }
       }
-    }, 500);
+    }, 300);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
@@ -105,8 +116,10 @@ export default function AppSidebar() {
             <span className="text-sm text-muted-foreground">ATHR Balance</span>
             <Sparkles className="h-4 w-4 text-purple-500" />
           </div>
-          <p className="text-2xl font-bold gradient-text mt-1">
-            {user?.athrBalance ? parseFloat(user.athrBalance).toFixed(2) : "0.00"}
+          <p className="text-2xl font-bold gradient-text mt-1" data-testid="sidebar-athr-balance">
+            {user?.athrBalance !== undefined && user?.athrBalance !== null 
+              ? parseFloat(user.athrBalance.toString()).toFixed(2) 
+              : "0.00"}
           </p>
         </div>
       </SidebarHeader>
@@ -191,7 +204,11 @@ export default function AppSidebar() {
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold truncate">{user?.name || "John Doe"}</p>
-            <p className="text-xs text-muted-foreground truncate">{user?.athrBalance ? parseFloat(user.athrBalance).toFixed(2) : "0.00"} ATH</p>
+            <p className="text-xs text-muted-foreground truncate">
+              {user?.athrBalance !== undefined && user?.athrBalance !== null 
+                ? parseFloat(user.athrBalance.toString()).toFixed(2) 
+                : "0.00"} ATH
+            </p>
           </div>
         </div>
       </SidebarFooter>
