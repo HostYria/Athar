@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,8 +23,17 @@ import QRCode from "react-qr-code";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Wallet() {
-  const userAddress = "11039PKSG281027GGA01BA071";
+  const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
+  
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
+  const userAddress = user?.walletAddress || "Loading...";
   
   // Dialog states
   const [showQRDialog, setShowQRDialog] = useState(false);
@@ -43,10 +52,18 @@ export default function Wallet() {
   const [athAmount, setAthAmount] = useState("");
   const [athCurrency, setAthCurrency] = useState("USD");
 
-  // Real balances - stored in state
-  const [usdBalance, setUsdBalance] = useState(1000.00);
-  const [sypBalance, setSypBalance] = useState(5500000);
-  const [athrBalance, setAthrBalance] = useState(15250);
+  // Real balances - from user data
+  const [usdBalance, setUsdBalance] = useState(parseFloat(user?.usdBalance || "0"));
+  const [sypBalance, setSypBalance] = useState(parseFloat(user?.sypBalance || "0"));
+  const [athrBalance, setAthrBalance] = useState(parseFloat(user?.athrBalance || "0"));
+
+  useEffect(() => {
+    if (user) {
+      setUsdBalance(parseFloat(user.usdBalance || "0"));
+      setSypBalance(parseFloat(user.sypBalance || "0"));
+      setAthrBalance(parseFloat(user.athrBalance || "0"));
+    }
+  }, [user]);
 
   // ATHR rates (configurable from admin panel)
   const athRates = {
@@ -93,8 +110,17 @@ export default function Wallet() {
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "خطأ",
+        description: "الرجاء تسجيل الدخول",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const amount = parseFloat(sendAmount);
-    const fee = amount * 0.0005; // 0.05% fee
+    const fee = amount * 0.0005;
     const total = amount + fee;
 
     if (total > usdBalance) {
@@ -106,17 +132,45 @@ export default function Wallet() {
       return;
     }
 
-    // Deduct from balance
-    setUsdBalance(prev => prev - total);
+    try {
+      const response = await fetch("/api/wallet/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          recipientAddress,
+          amount: sendAmount,
+          currency: "USD",
+        }),
+      });
 
-    toast({
-      title: "تم الإرسال بنجاح",
-      description: `تم إرسال ${sendAmount} USD مع رسوم ${fee.toFixed(2)} USD (الإجمالي: ${total.toFixed(2)} USD)`,
-    });
-    
-    setShowSendDialog(false);
-    setSendAmount("");
-    setRecipientAddress("");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      setUsdBalance(parseFloat(data.senderBalance));
+      
+      const updatedUser = { ...user, usdBalance: data.senderBalance };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      toast({
+        title: "تم الإرسال بنجاح",
+        description: `تم إرسال ${amount.toFixed(2)} USD مع رسوم ${fee.toFixed(2)} USD`,
+      });
+
+      setShowSendDialog(false);
+      setSendAmount("");
+      setRecipientAddress("");
+    } catch (error: any) {
+      toast({
+        title: "خطأ",
+        description: error.message || "فشل الإرسال",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleATHTrade = async () => {
@@ -129,73 +183,71 @@ export default function Wallet() {
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "خطأ",
+        description: "الرجاء تسجيل الدخول",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const amount = parseFloat(athAmount);
     const rate = athRates[athCurrency as keyof typeof athRates];
     
-    if (athAction === "buy") {
-      const total = amount * rate;
-      
-      if (athCurrency === "USD" && total > usdBalance) {
-        toast({
-          title: "خطأ",
-          description: "رصيد USD غير كافي",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (athCurrency === "SYP" && total > sypBalance) {
-        toast({
-          title: "خطأ",
-          description: "رصيد SYP غير كافي",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Execute buy
-      if (athCurrency === "USD") {
-        setUsdBalance(prev => prev - total);
-      } else {
-        setSypBalance(prev => prev - total);
-      }
-      setAthrBalance(prev => prev + amount);
-
-      toast({
-        title: "تم الشراء بنجاح",
-        description: `تم شراء ${amount.toFixed(2)} ATHR مقابل ${total.toFixed(2)} ${athCurrency}`,
+    try {
+      const response = await fetch("/api/wallet/trade-athr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          action: athAction,
+          amount: athAmount,
+          currency: athCurrency,
+        }),
       });
-    } else {
-      // Sell
-      if (amount > athrBalance) {
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      // Update local state
+      if (data.balances.usdBalance) setUsdBalance(parseFloat(data.balances.usdBalance));
+      if (data.balances.sypBalance) setSypBalance(parseFloat(data.balances.sypBalance));
+      if (data.balances.athrBalance) setAthrBalance(parseFloat(data.balances.athrBalance));
+
+      // Update user in localStorage
+      const updatedUser = { ...user, ...data.balances };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      if (athAction === "buy") {
+        const total = amount * rate;
         toast({
-          title: "خطأ",
-          description: "رصيد ATHR غير كافي",
-          variant: "destructive",
+          title: "تم الشراء بنجاح",
+          description: `تم شراء ${amount.toFixed(2)} ATHR مقابل ${total.toFixed(2)} ${athCurrency}`,
         });
-        return;
-      }
-
-      const totalBeforeFee = amount * rate;
-      const fee = totalBeforeFee * 0.0005; // 0.05% fee
-      const netAmount = totalBeforeFee - fee;
-
-      // Execute sell
-      setAthrBalance(prev => prev - amount);
-      if (athCurrency === "USD") {
-        setUsdBalance(prev => prev + netAmount);
       } else {
-        setSypBalance(prev => prev + netAmount);
+        const totalBeforeFee = amount * rate;
+        const fee = totalBeforeFee * 0.0005;
+        const netAmount = totalBeforeFee - fee;
+        toast({
+          title: "تم البيع بنجاح",
+          description: `تم بيع ${amount.toFixed(2)} ATHR مقابل ${netAmount.toFixed(2)} ${athCurrency}`,
+        });
       }
 
+      setShowATHDialog(false);
+      setAthAmount("");
+    } catch (error: any) {
       toast({
-        title: "تم البيع بنجاح",
-        description: `تم بيع ${amount.toFixed(2)} ATHR مقابل ${netAmount.toFixed(2)} ${athCurrency} (رسوم: ${fee.toFixed(2)} ${athCurrency})`,
+        title: "خطأ",
+        description: error.message || "فشلت العملية",
+        variant: "destructive",
       });
     }
-    
-    setShowATHDialog(false);
-    setAthAmount("");
   };
 
   // Calculate preview for ATH trade

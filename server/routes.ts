@@ -113,33 +113,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Wallet endpoints
   app.post("/api/wallet/send", async (req, res) => {
     try {
-      const { currency, amount, recipient } = req.body;
+      const { userId, recipientAddress, amount, currency } = req.body;
 
-      if (!currency || !amount || !recipient) {
+      if (!userId || !recipientAddress || !amount || !currency) {
         return res.status(400).json({ message: "All fields are required" });
       }
 
-      if (amount <= 0) {
+      const amountNum = parseFloat(amount);
+      if (amountNum <= 0) {
         return res.status(400).json({ message: "Amount must be greater than 0" });
       }
 
-      // In a real app, you would:
-      // 1. Verify user authentication
-      // 2. Check user's balance
-      // 3. Validate recipient address
-      // 4. Create transaction record
-      // 5. Update balances
+      const sender = await storage.getUserById(userId);
+      if (!sender) {
+        return res.status(404).json({ message: "Sender not found" });
+      }
 
-      console.log(`Transaction: Send ${amount} ${currency} to ${recipient}`);
+      const recipient = await storage.getUserByWalletAddress(recipientAddress);
+      if (!recipient) {
+        return res.status(404).json({ message: "Recipient address not found" });
+      }
+
+      const fee = amountNum * 0.0005; // 0.05%
+      const total = amountNum + fee;
+
+      // Check balance
+      const senderBalance = parseFloat(sender.usdBalance || "0");
+      if (total > senderBalance) {
+        return res.status(400).json({ message: "Insufficient balance" });
+      }
+
+      // Update balances
+      await storage.updateUserBalance(userId, {
+        usdBalance: (senderBalance - total).toFixed(2)
+      });
+
+      const recipientBalance = parseFloat(recipient.usdBalance || "0");
+      await storage.updateUserBalance(recipient.id, {
+        usdBalance: (recipientBalance + amountNum).toFixed(2)
+      });
+
+      // Create notifications
+      await storage.createNotification({
+        userId: sender.id,
+        type: "wallet",
+        title: "تم الإرسال بنجاح",
+        description: `تم إرسال ${amountNum.toFixed(2)} ${currency} إلى ${recipientAddress}`,
+      });
+
+      await storage.createNotification({
+        userId: recipient.id,
+        type: "wallet",
+        title: "تم استلام تحويل",
+        description: `تم استلام ${amountNum.toFixed(2)} ${currency} من ${sender.walletAddress}`,
+      });
 
       res.json({
         message: "Transaction successful",
-        transaction: {
-          currency,
-          amount,
-          recipient,
-          timestamp: new Date().toISOString(),
-        },
+        senderBalance: (senderBalance - total).toFixed(2),
       });
     } catch (error) {
       console.error("Send transaction error:", error);
@@ -147,42 +178,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/wallet/trade-ath", async (req, res) => {
+  app.post("/api/wallet/trade-athr", async (req, res) => {
     try {
-      const { action, amount } = req.body;
+      const { userId, action, amount, currency } = req.body;
 
-      if (!action || !amount) {
-        return res.status(400).json({ message: "Action and amount are required" });
+      if (!userId || !action || !amount || !currency) {
+        return res.status(400).json({ message: "All fields are required" });
       }
 
-      if (amount <= 0) {
+      const amountNum = parseFloat(amount);
+      if (amountNum <= 0) {
         return res.status(400).json({ message: "Amount must be greater than 0" });
       }
 
-      const athRate = 0.001;
-      const usdAmount = amount * athRate;
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
 
-      // In a real app, you would:
-      // 1. Verify user authentication
-      // 2. Check balances (USD for buy, ATH for sell)
-      // 3. Execute the trade
-      // 4. Update user balances
-      // 5. Create transaction record
+      const rates: Record<string, number> = { USD: 0.001, SYP: 11 };
+      const rate = rates[currency];
 
-      console.log(`ATH Trade: ${action} ${amount} ATH (${usdAmount} USD)`);
+      if (action === "buy") {
+        const total = amountNum * rate;
+        const balance = parseFloat(currency === "USD" ? user.usdBalance || "0" : user.sypBalance || "0");
 
-      res.json({
-        message: "Trade successful",
-        trade: {
-          action,
-          athAmount: amount,
-          usdAmount,
-          timestamp: new Date().toISOString(),
-        },
-      });
+        if (total > balance) {
+          return res.status(400).json({ message: "Insufficient balance" });
+        }
+
+        const athrBalance = parseFloat(user.athrBalance || "0");
+        
+        const updates: any = { athrBalance: (athrBalance + amountNum).toFixed(2) };
+        if (currency === "USD") {
+          updates.usdBalance = (balance - total).toFixed(2);
+        } else {
+          updates.sypBalance = (balance - total).toFixed(2);
+        }
+
+        await storage.updateUserBalance(userId, updates);
+
+        await storage.createNotification({
+          userId: user.id,
+          type: "wallet",
+          title: "تم شراء ATHR",
+          description: `تم شراء ${amountNum.toFixed(2)} ATHR مقابل ${total.toFixed(2)} ${currency}`,
+        });
+
+        res.json({ message: "Purchase successful", balances: updates });
+      } else {
+        const athrBalance = parseFloat(user.athrBalance || "0");
+        if (amountNum > athrBalance) {
+          return res.status(400).json({ message: "Insufficient ATHR balance" });
+        }
+
+        const totalBeforeFee = amountNum * rate;
+        const fee = totalBeforeFee * 0.0005;
+        const netAmount = totalBeforeFee - fee;
+
+        const balance = parseFloat(currency === "USD" ? user.usdBalance || "0" : user.sypBalance || "0");
+        
+        const updates: any = { athrBalance: (athrBalance - amountNum).toFixed(2) };
+        if (currency === "USD") {
+          updates.usdBalance = (balance + netAmount).toFixed(2);
+        } else {
+          updates.sypBalance = (balance + netAmount).toFixed(2);
+        }
+
+        await storage.updateUserBalance(userId, updates);
+
+        await storage.createNotification({
+          userId: user.id,
+          type: "wallet",
+          title: "تم بيع ATHR",
+          description: `تم بيع ${amountNum.toFixed(2)} ATHR مقابل ${netAmount.toFixed(2)} ${currency}`,
+        });
+
+        res.json({ message: "Sale successful", balances: updates });
+      }
     } catch (error) {
-      console.error("ATH trade error:", error);
+      console.error("ATHR trade error:", error);
       res.status(500).json({ message: "Trade failed" });
+    }
+  });
+
+  // Notification endpoints
+  app.get("/api/notifications/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const notifications = await storage.getUserNotifications(userId);
+      res.json(notifications);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.post("/api/notifications/:id/read", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.markNotificationAsRead(id);
+      res.json({ message: "Notification marked as read" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  app.post("/api/notifications/:userId/read-all", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      await storage.markAllNotificationsAsRead(userId);
+      res.json({ message: "All notifications marked as read" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark all notifications as read" });
     }
   });
 
