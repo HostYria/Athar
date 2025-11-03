@@ -16,6 +16,10 @@ import Friends from "@/pages/Friends";
 import Settings from "@/pages/Settings";
 import Notifications from "@/pages/Notifications";
 import AuthPage from "@/pages/AuthPage";
+import { Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
+import type { User } from "@shared/schema";
+
 
 function Router() {
   return (
@@ -41,27 +45,52 @@ export default function App() {
     "--sidebar-width-icon": "4rem",
   };
 
+  const [location] = useLocation();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  if (!user && location !== "/auth") {
+    return <AuthPage onAuthSuccess={setUser} />;
+  }
+
+  if (location === "/auth") {
+    return <AuthPage onAuthSuccess={setUser} />;
+  }
+
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/40 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-          <SidebarProvider style={style as React.CSSProperties}>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1 min-w-0">
-                <header className="flex items-center justify-between p-4 backdrop-blur-xl bg-white/50 dark:bg-white/5 border-b border-white/20 dark:border-white/10">
-                  <SidebarTrigger data-testid="button-sidebar-toggle" className="hover:bg-white/50 dark:hover:bg-white/10 rounded-xl" />
-                  <ThemeToggle />
-                </header>
-                <main className="flex-1 overflow-auto p-8">
-                  <Router />
-                </main>
-              </div>
+        <SidebarProvider style={style as React.CSSProperties}>
+          <div className="flex h-screen w-full">
+            <AppSidebar />
+            <div className="flex flex-col flex-1 min-w-0">
+              <header className="flex items-center justify-between p-4 backdrop-blur-xl bg-white/50 dark:bg-white/5 border-b border-white/20 dark:border-white/10">
+                <SidebarTrigger data-testid="button-sidebar-toggle" className="hover:bg-white/50 dark:hover:bg-white/10 rounded-xl" />
+                <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-white/50 dark:bg-white/5 backdrop-blur-sm border border-white/20 dark:border-white/10">
+                  <div className="h-8 w-8 rounded-full gradient-primary flex items-center justify-center">
+                    <Sparkles className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="text-sm">
+                    <span className="font-semibold gradient-text">15,250 ATHR</span>
+                  </div>
+                </div>
+                <ThemeToggle />
+              </header>
+              <main className="flex-1 overflow-auto p-8">
+                <Router />
+              </main>
             </div>
-          </SidebarProvider>
-        </div>
-        <Toaster />
+          </div>
+        </SidebarProvider>
       </TooltipProvider>
+      <Toaster />
     </QueryClientProvider>
   );
 }

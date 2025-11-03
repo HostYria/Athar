@@ -6,6 +6,7 @@ import ATHTrading from "@/components/ATHTrading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Wallet() {
+  const userAddress = "11039PKSG281027GGA01BA071";
   const [selectedCurrency, setSelectedCurrency] = useState<string | null>(null);
   const [action, setAction] = useState<"send" | "receive" | null>(null);
 
@@ -56,21 +57,21 @@ export default function Wallet() {
           <h2 className="text-2xl font-semibold mb-6 gradient-text">Quick Actions</h2>
           <Tabs defaultValue="ath">
             <TabsList className="grid w-full grid-cols-3 bg-white/50 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-full p-1 shadow-lg">
-              <TabsTrigger 
-                value="syp" 
+              <TabsTrigger
+                value="syp"
                 className="rounded-full data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:shadow-lg"
                 onClick={() => { setSelectedCurrency("SYP"); setAction("send"); }}
               >
                 SYP
               </TabsTrigger>
-              <TabsTrigger 
-                value="usd" 
+              <TabsTrigger
+                value="usd"
                 className="rounded-full data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:shadow-lg"
                 onClick={() => { setSelectedCurrency("USD"); setAction("send"); }}
               >
                 USD
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="ath"
                 className="rounded-full data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:shadow-lg"
               >
@@ -78,10 +79,10 @@ export default function Wallet() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="syp" className="mt-6">
-              <SendReceiveForm currency="SYP" />
+              <SendReceiveForm currency="SYP" userAddress={userAddress} />
             </TabsContent>
             <TabsContent value="usd" className="mt-6">
-              <SendReceiveForm currency="USD" />
+              <SendReceiveForm currency="USD" userAddress={userAddress} />
             </TabsContent>
             <TabsContent value="ath" className="mt-6">
               <ATHTrading />
@@ -92,7 +93,7 @@ export default function Wallet() {
         <div>
           <h2 className="text-2xl font-semibold mb-6 gradient-text">Your Address</h2>
           <QRCodeDisplay
-            address="11039PKSG281027GGA01BA071"
+            address={userAddress}
             title="Wallet Address"
           />
         </div>

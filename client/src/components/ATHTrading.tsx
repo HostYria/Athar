@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ export default function ATHTrading() {
     SYP: 11,
   };
 
-  const calculateATH = (amount: string, currency: string) => {
+  const calculateATHR = (amount: string, currency: string) => {
     const num = parseFloat(amount) || 0;
     const rate = rates[currency as keyof typeof rates];
     return (num / rate).toFixed(2);
@@ -36,30 +37,46 @@ export default function ATHTrading() {
 
   const handleBuy = () => {
     if (!buyAmount) return;
-    console.log("Buying ATH:", { amount: buyAmount, currency: buyCurrency });
     toast({
       title: "Purchase Successful",
-      description: `Bought ${calculateATH(buyAmount, buyCurrency)} ATH`,
+      description: `Bought ${calculateATHR(buyAmount, buyCurrency)} ATHR for ${buyAmount} ${buyCurrency}`,
     });
     setBuyAmount("");
   };
 
   const handleSell = () => {
     if (!sellAmount) return;
-    console.log("Selling ATH:", { amount: sellAmount, currency: sellCurrency });
     toast({
       title: "Sale Successful",
-      description: `Sold ${sellAmount} ATH`,
+      description: `Sold ${sellAmount} ATHR for ${(parseFloat(sellAmount) * rates[sellCurrency as keyof typeof rates]).toFixed(2)} ${sellCurrency}`,
     });
     setSellAmount("");
   };
 
   const handleTransfer = () => {
-    if (!transferAmount || !transferTo) return;
-    console.log("Transferring ATH:", { amount: transferAmount, to: transferTo });
+    if (!transferAmount || !transferTo) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const amount = parseFloat(transferAmount);
+    if (amount < 100) {
+      toast({
+        title: "Error",
+        description: "Minimum transfer amount is 100 ATHR",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const fee = Math.max(amount * 0.00005, 100);
     toast({
       title: "Transfer Initiated",
-      description: `Transferring ${transferAmount} ATH (Fee: 0.005%)`,
+      description: `Transferring ${transferAmount} ATHR to ${transferTo} (Fee: ${fee.toFixed(2)} ATHR)`,
     });
     setTransferAmount("");
     setTransferTo("");
@@ -73,26 +90,26 @@ export default function ATHTrading() {
           <div className="h-10 w-10 rounded-2xl gradient-primary flex items-center justify-center">
             <Sparkles className="h-5 w-5 text-white" />
           </div>
-          <CardTitle className="text-2xl gradient-text">ATH Trading</CardTitle>
+          <CardTitle className="text-2xl gradient-text">ATHR Trading</CardTitle>
         </div>
         <div className="text-sm text-muted-foreground bg-white/50 dark:bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full inline-flex items-center gap-2 w-fit">
           <div className="h-2 w-2 rounded-full gradient-primary animate-pulse" />
-          1 ATH = 0.001 USD / 11 SYP
+          1 ATHR = 0.001 USD / 11 SYP
         </div>
       </CardHeader>
       <CardContent className="relative">
         <Tabs defaultValue="buy" className="w-full">
           <TabsList className="grid w-full grid-cols-3 bg-white/50 dark:bg-white/5 backdrop-blur-sm rounded-full p-1">
-            <TabsTrigger value="buy" className="rounded-full data-[state=active]:gradient-primary data-[state=active]:text-white" data-testid="tab-buy">Buy</TabsTrigger>
-            <TabsTrigger value="sell" className="rounded-full data-[state=active]:gradient-primary data-[state=active]:text-white" data-testid="tab-sell">Sell</TabsTrigger>
-            <TabsTrigger value="transfer" className="rounded-full data-[state=active]:gradient-primary data-[state=active]:text-white" data-testid="tab-transfer">Transfer</TabsTrigger>
+            <TabsTrigger value="buy" className="rounded-full data-[state=active]:gradient-primary data-[state=active]:text-white">Buy</TabsTrigger>
+            <TabsTrigger value="sell" className="rounded-full data-[state=active]:gradient-primary data-[state=active]:text-white">Sell</TabsTrigger>
+            <TabsTrigger value="transfer" className="rounded-full data-[state=active]:gradient-primary data-[state=active]:text-white">Transfer</TabsTrigger>
           </TabsList>
 
           <TabsContent value="buy" className="space-y-4 mt-6">
             <div className="space-y-2">
               <Label htmlFor="buy-currency" className="text-sm font-medium">Pay With</Label>
               <Select value={buyCurrency} onValueChange={setBuyCurrency}>
-                <SelectTrigger id="buy-currency" className="rounded-xl bg-white/50 dark:bg-white/5 backdrop-blur-sm border-white/20" data-testid="select-buy-currency">
+                <SelectTrigger id="buy-currency" className="rounded-xl bg-white/50 dark:bg-white/5 backdrop-blur-sm border-white/20">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -102,7 +119,7 @@ export default function ATHTrading() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="buy-amount" className="text-sm font-medium">Amount</Label>
+              <Label htmlFor="buy-amount" className="text-sm font-medium">Amount ({buyCurrency})</Label>
               <Input
                 id="buy-amount"
                 type="number"
@@ -110,17 +127,16 @@ export default function ATHTrading() {
                 value={buyAmount}
                 onChange={(e) => setBuyAmount(e.target.value)}
                 className="rounded-xl bg-white/50 dark:bg-white/5 backdrop-blur-sm border-white/20 text-lg"
-                data-testid="input-buy-amount"
               />
               {buyAmount && (
                 <p className="text-sm text-muted-foreground bg-white/30 dark:bg-white/5 backdrop-blur-sm px-3 py-2 rounded-lg">
-                  You will receive: <span className="font-semibold gradient-text">{calculateATH(buyAmount, buyCurrency)} ATH</span>
+                  You will receive: <span className="font-semibold gradient-text">{calculateATHR(buyAmount, buyCurrency)} ATHR</span>
                 </p>
               )}
             </div>
-            <Button className="w-full rounded-full gradient-primary text-white border-0 shadow-lg hover:shadow-xl transition-all" onClick={handleBuy} data-testid="button-buy-ath">
+            <Button className="w-full rounded-full gradient-primary text-white border-0 shadow-lg hover:shadow-xl transition-all" onClick={handleBuy}>
               <TrendingUp className="h-4 w-4 mr-2" />
-              Buy ATH
+              Buy ATHR
             </Button>
           </TabsContent>
 
@@ -128,7 +144,7 @@ export default function ATHTrading() {
             <div className="space-y-2">
               <Label htmlFor="sell-currency" className="text-sm font-medium">Receive In</Label>
               <Select value={sellCurrency} onValueChange={setSellCurrency}>
-                <SelectTrigger id="sell-currency" className="rounded-xl bg-white/50 dark:bg-white/5 backdrop-blur-sm border-white/20" data-testid="select-sell-currency">
+                <SelectTrigger id="sell-currency" className="rounded-xl bg-white/50 dark:bg-white/5 backdrop-blur-sm border-white/20">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -138,7 +154,7 @@ export default function ATHTrading() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="sell-amount" className="text-sm font-medium">ATH Amount</Label>
+              <Label htmlFor="sell-amount" className="text-sm font-medium">ATHR Amount</Label>
               <Input
                 id="sell-amount"
                 type="number"
@@ -146,7 +162,6 @@ export default function ATHTrading() {
                 value={sellAmount}
                 onChange={(e) => setSellAmount(e.target.value)}
                 className="rounded-xl bg-white/50 dark:bg-white/5 backdrop-blur-sm border-white/20 text-lg"
-                data-testid="input-sell-amount"
               />
               {sellAmount && (
                 <p className="text-sm text-muted-foreground bg-white/30 dark:bg-white/5 backdrop-blur-sm px-3 py-2 rounded-lg">
@@ -154,26 +169,25 @@ export default function ATHTrading() {
                 </p>
               )}
             </div>
-            <Button className="w-full rounded-full gradient-primary text-white border-0 shadow-lg hover:shadow-xl transition-all" onClick={handleSell} data-testid="button-sell-ath">
+            <Button className="w-full rounded-full gradient-primary text-white border-0 shadow-lg hover:shadow-xl transition-all" onClick={handleSell}>
               <TrendingDown className="h-4 w-4 mr-2" />
-              Sell ATH
+              Sell ATHR
             </Button>
           </TabsContent>
 
           <TabsContent value="transfer" className="space-y-4 mt-6">
             <div className="space-y-2">
-              <Label htmlFor="transfer-to" className="text-sm font-medium">Transfer To</Label>
+              <Label htmlFor="transfer-to" className="text-sm font-medium">Transfer To (Email or Username)</Label>
               <Input
                 id="transfer-to"
-                placeholder="Email or username"
+                placeholder="Enter email or username"
                 value={transferTo}
                 onChange={(e) => setTransferTo(e.target.value)}
                 className="rounded-xl bg-white/50 dark:bg-white/5 backdrop-blur-sm border-white/20"
-                data-testid="input-transfer-to"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="transfer-amount" className="text-sm font-medium">ATH Amount</Label>
+              <Label htmlFor="transfer-amount" className="text-sm font-medium">ATHR Amount</Label>
               <Input
                 id="transfer-amount"
                 type="number"
@@ -181,15 +195,14 @@ export default function ATHTrading() {
                 value={transferAmount}
                 onChange={(e) => setTransferAmount(e.target.value)}
                 className="rounded-xl bg-white/50 dark:bg-white/5 backdrop-blur-sm border-white/20 text-lg"
-                data-testid="input-transfer-amount"
               />
               <p className="text-xs text-muted-foreground">
-                Fee: 0.005% (minimum 100 ATH)
+                Fee: 0.005% (minimum 100 ATHR)
               </p>
             </div>
-            <Button className="w-full rounded-full gradient-primary text-white border-0 shadow-lg hover:shadow-xl transition-all" onClick={handleTransfer} data-testid="button-transfer-ath">
+            <Button className="w-full rounded-full gradient-primary text-white border-0 shadow-lg hover:shadow-xl transition-all" onClick={handleTransfer}>
               <Send className="h-4 w-4 mr-2" />
-              Transfer ATH
+              Transfer ATHR
             </Button>
           </TabsContent>
         </Tabs>
