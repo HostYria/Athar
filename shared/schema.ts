@@ -1,5 +1,6 @@
-import { sql, uuid, varchar, text, timestamp, jsonb, decimal, boolean } from "drizzle-orm/pg-core";
-import { pgTable, createInsertSchema, createSelectSchema } from "drizzle-orm";
+import { pgTable, uuid, varchar, text, timestamp, jsonb, decimal, boolean } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const users = pgTable("users", {
