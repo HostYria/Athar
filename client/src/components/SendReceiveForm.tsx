@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { QrCode, Upload, ArrowRight } from "lucide-react";
+import { QrCode, Upload, ArrowRight, Send, ArrowDownToLine } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SendReceiveFormProps {
@@ -12,26 +12,67 @@ interface SendReceiveFormProps {
 }
 
 export default function SendReceiveForm({ currency }: SendReceiveFormProps) {
-  const [amount, setAmount] = useState("");
-  const [address, setAddress] = useState("");
   const { toast } = useToast();
+  const [mode, setMode] = useState<"send" | "receive">("send");
+  const [amount, setAmount] = useState("");
+  const [recipient, setRecipient] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSend = () => {
-    if (!amount || !address) {
-      toast({
-        title: "Missing Information",
-        description: "Please enter both amount and recipient address",
-        variant: "destructive",
-      });
-      return;
+  const handleTransaction = async () => {
+    if (mode === "send") {
+      if (!amount || !recipient) {
+        toast({
+          title: "Error",
+          description: "Please fill in all fields",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (parseFloat(amount) <= 0) {
+        toast({
+          title: "Error",
+          description: "Amount must be greater than 0",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await fetch("/api/wallet/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            currency,
+            amount: parseFloat(amount),
+            recipient,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Transaction failed");
+        }
+
+        toast({
+          title: "Success",
+          description: `Sent ${amount} ${currency} to ${recipient.slice(0, 10)}...`,
+        });
+
+        setAmount("");
+        setRecipient("");
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Transaction failed",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
-    console.log("Sending:", { amount, address, currency });
-    toast({
-      title: "Transaction Initiated",
-      description: `Sending ${amount} ${currency}`,
-    });
-    setAmount("");
-    setAddress("");
   };
 
   return (
@@ -52,10 +93,11 @@ export default function SendReceiveForm({ currency }: SendReceiveFormProps) {
               <Input
                 id="address"
                 placeholder="Enter recipient address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
                 className="font-mono text-sm rounded-xl bg-white/50 dark:bg-white/5 backdrop-blur-sm border-white/20"
                 data-testid="input-recipient-address"
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -68,9 +110,10 @@ export default function SendReceiveForm({ currency }: SendReceiveFormProps) {
                 onChange={(e) => setAmount(e.target.value)}
                 className="text-2xl font-bold tabular-nums rounded-xl bg-white/50 dark:bg-white/5 backdrop-blur-sm border-white/20"
                 data-testid="input-amount"
+                disabled={isLoading}
               />
             </div>
-            <Button className="w-full rounded-full gradient-primary text-white border-0 shadow-lg" onClick={handleSend} data-testid="button-send">
+            <Button className="w-full rounded-full gradient-primary text-white border-0 shadow-lg" onClick={handleTransaction} data-testid="button-send" disabled={isLoading}>
               Send {currency}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>

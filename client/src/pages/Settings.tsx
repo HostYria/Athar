@@ -173,6 +173,17 @@ export default function Settings() {
           <Button variant="outline" className="w-full" data-testid="button-export-data">
             Export My Data
           </Button>
+          <Button 
+            variant="outline" 
+            className="w-full" 
+            data-testid="button-log-out"
+            onClick={() => {
+              // Clear any stored auth data and redirect to auth page
+              window.location.href = '/auth';
+            }}
+          >
+            Log Out
+          </Button>
           <Button variant="destructive" className="w-full" data-testid="button-delete-account">
             Delete Account
           </Button>
