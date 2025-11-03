@@ -95,8 +95,11 @@ export default function Wallet() {
         
         if (code) {
           setRecipientAddress(code.data);
-          setSendMethod("manual");
           stopCamera();
+          // تأخير قليل قبل التحويل للتبويب اليدوي للتأكد من إيقاف الكاميرا
+          setTimeout(() => {
+            setSendMethod("manual");
+          }, 100);
           toast({
             title: "تم المسح بنجاح",
             description: "تم قراءة عنوان المحفظة",
@@ -439,8 +442,17 @@ export default function Wallet() {
   useEffect(() => {
     if (!showSendDialog) {
       stopCamera();
+      setSendMethod("manual");
+      setIsCameraActive(false);
     }
   }, [showSendDialog]);
+
+  // إيقاف الكاميرا عند التحويل من تبويب المسح
+  useEffect(() => {
+    if (sendMethod !== "scan" && isCameraActive) {
+      stopCamera();
+    }
+  }, [sendMethod]);
 
   return (
     <div className="space-y-8 max-w-7xl" data-testid="wallet-page">
