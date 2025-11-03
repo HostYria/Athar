@@ -66,9 +66,9 @@ export default function Wallet() {
 
   useEffect(() => {
     if (user) {
-      setUsdBalance(parseFloat(user.usdBalance || "0"));
-      setSypBalance(parseFloat(user.sypBalance || "0"));
-      setAthrBalance(parseFloat(user.athrBalance || "0"));
+      setUsdBalance(parseFloat(user.usdBalance?.toString() || "0") || 0);
+      setSypBalance(parseFloat(user.sypBalance?.toString() || "0") || 0);
+      setAthrBalance(parseFloat(user.athrBalance?.toString() || "0") || 0);
     }
   }, [user]);
 
@@ -606,7 +606,9 @@ export default function Wallet() {
           <CardTitle className="text-xl gradient-text">ATHR Balance</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-4xl font-bold tabular-nums" data-testid="balance-athr">{athrBalance.toFixed(2)} ATHR</div>
+          <div className="text-4xl font-bold tabular-nums" data-testid="balance-athr">
+            {(parseFloat(athrBalance.toString()) || 0).toFixed(2)} ATHR
+          </div>
           <p className="text-sm text-muted-foreground">
             1 ATHR = {athRates.USD} USD أو {athRates.SYP} SYP
           </p>

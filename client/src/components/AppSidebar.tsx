@@ -118,7 +118,7 @@ export default function AppSidebar() {
           </div>
           <p className="text-2xl font-bold gradient-text mt-1" data-testid="sidebar-athr-balance">
             {user?.athrBalance !== undefined && user?.athrBalance !== null 
-              ? parseFloat(user.athrBalance.toString()).toFixed(2) 
+              ? (parseFloat(user.athrBalance.toString()) || 0).toFixed(2)
               : "0.00"}
           </p>
         </div>
@@ -206,7 +206,7 @@ export default function AppSidebar() {
             <p className="text-sm font-semibold truncate">{user?.name || "John Doe"}</p>
             <p className="text-xs text-muted-foreground truncate">
               {user?.athrBalance !== undefined && user?.athrBalance !== null 
-                ? parseFloat(user.athrBalance.toString()).toFixed(2) 
+                ? (parseFloat(user.athrBalance.toString()) || 0).toFixed(2)
                 : "0.00"} ATH
             </p>
           </div>
