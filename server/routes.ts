@@ -3,6 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertPasswordResetRequestSchema } from "@shared/schema";
 import { z } from "zod";
+import jwt from "jsonwebtoken"; // Assuming jwt is used elsewhere and needs importing
+
+const jwtSecret = process.env.JWT_SECRET || "your_secret_key"; // Define jwtSecret
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Register endpoint
@@ -22,17 +25,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email already exists" });
       }
 
-      const user = await storage.createUser(userData);
+      const newUser = await storage.createUser(userData);
+      const token = jwt.sign({ userId: newUser.id }, jwtSecret);
 
-      // Don't send password back
-      const { password, ...userWithoutPassword } = user;
-      res.status(201).json({ user: userWithoutPassword });
-    } catch (error) {
+      res.status(201).json({
+        message: "Registration successful",
+        token,
+        user: {
+          id: newUser.id,
+          username: newUser.username,
+          email: newUser.email,
+          name: newUser.fullName,
+          walletAddress: newUser.walletAddress,
+          usdBalance: parseFloat(newUser.usdBalance || "0"),
+          sypBalance: parseFloat(newUser.sypBalance || "0"),
+          athrBalance: parseFloat(newUser.athrBalance || "0"),
+        },
+      });
+    } catch (error: any) {
+      console.error("Registration error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input", errors: error.errors });
       }
-      console.error("Registration error:", error);
-      res.status(500).json({ message: "Server error", error: error instanceof Error ? error.message : "Unknown error" });
+      res.status(500).json({ message: "Server error", error: error.message });
     }
   });
 
@@ -55,12 +70,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      // Don't send password back
-      const { password: _, ...userWithoutPassword } = user;
-      res.json({ user: userWithoutPassword });
+      const token = jwt.sign({ userId: user.id }, jwtSecret);
+
+      res.json({
+        message: "Login successful",
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          name: user.fullName,
+          walletAddress: user.walletAddress,
+          usdBalance: parseFloat(user.usdBalance || "0"),
+          sypBalance: parseFloat(user.sypBalance || "0"),
+          athrBalance: parseFloat(user.athrBalance || "0"),
+        },
+      });
     } catch (error) {
       console.error("Login error:", error);
-      res.status(500).json({ message: "Server error", error: error instanceof Error ? error.message : "Unknown error" });
+      res.status(500).json({ message: "Login failed", error: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 
@@ -208,7 +236,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const athrBalance = parseFloat(user.athrBalance || "0");
-        
+
         const updates: any = { athrBalance: (athrBalance + amountNum).toFixed(2) };
         if (currency === "USD") {
           updates.usdBalance = (balance - total).toFixed(2);
@@ -237,7 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const netAmount = totalBeforeFee - fee;
 
         const balance = parseFloat(currency === "USD" ? user.usdBalance || "0" : user.sypBalance || "0");
-        
+
         const updates: any = { athrBalance: (athrBalance - amountNum).toFixed(2) };
         if (currency === "USD") {
           updates.usdBalance = (balance + netAmount).toFixed(2);

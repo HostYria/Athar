@@ -303,13 +303,15 @@ export default function Wallet() {
 
       // Update balances
       if (sendCurrency === "USD") {
-        setUsdBalance(parseFloat(data.senderBalance));
-        const updatedUser = { ...user, usdBalance: data.senderBalance };
+        const newBalance = parseFloat(data.senderBalance);
+        setUsdBalance(newBalance);
+        const updatedUser = { ...user, usdBalance: newBalance };
         setUser(updatedUser);
         localStorage.setItem("user", JSON.stringify(updatedUser));
       } else {
-        setSypBalance(parseFloat(data.senderBalance));
-        const updatedUser = { ...user, sypBalance: data.senderBalance };
+        const newBalance = parseFloat(data.senderBalance);
+        setSypBalance(newBalance);
+        const updatedUser = { ...user, sypBalance: newBalance };
         setUser(updatedUser);
         localStorage.setItem("user", JSON.stringify(updatedUser));
       }
@@ -373,12 +375,25 @@ export default function Wallet() {
       }
 
       // Update local state
-      if (data.balances.usdBalance) setUsdBalance(parseFloat(data.balances.usdBalance));
-      if (data.balances.sypBalance) setSypBalance(parseFloat(data.balances.sypBalance));
-      if (data.balances.athrBalance) setAthrBalance(parseFloat(data.balances.athrBalance));
+      const updatedBalances: any = {};
+      if (data.balances.usdBalance !== undefined) {
+        const newUsd = typeof data.balances.usdBalance === 'number' ? data.balances.usdBalance : parseFloat(data.balances.usdBalance);
+        setUsdBalance(newUsd);
+        updatedBalances.usdBalance = newUsd;
+      }
+      if (data.balances.sypBalance !== undefined) {
+        const newSyp = typeof data.balances.sypBalance === 'number' ? data.balances.sypBalance : parseFloat(data.balances.sypBalance);
+        setSypBalance(newSyp);
+        updatedBalances.sypBalance = newSyp;
+      }
+      if (data.balances.athrBalance !== undefined) {
+        const newAthr = typeof data.balances.athrBalance === 'number' ? data.balances.athrBalance : parseFloat(data.balances.athrBalance);
+        setAthrBalance(newAthr);
+        updatedBalances.athrBalance = newAthr;
+      }
 
       // Update user in localStorage
-      const updatedUser = { ...user, ...data.balances };
+      const updatedUser = { ...user, ...updatedBalances };
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
 
