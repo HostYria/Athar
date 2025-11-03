@@ -57,6 +57,41 @@ export default function App() {
     }
   }, []);
 
+  // تحديث بيانات المستخدم عند تغيير localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const userData = localStorage.getItem("user");
+      if (userData) {
+        try {
+          setUser(JSON.parse(userData));
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    const interval = setInterval(() => {
+      const userData = localStorage.getItem("user");
+      if (userData) {
+        try {
+          const newUser = JSON.parse(userData);
+          if (user?.athrBalance !== newUser.athrBalance) {
+            setUser(newUser);
+          }
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+        }
+      }
+    }, 300);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [user]);
+
   if (!user && location !== "/auth") {
     return <AuthPage onAuthSuccess={setUser} />;
   }
@@ -80,7 +115,11 @@ export default function App() {
                     <Sparkles className="h-4 w-4 text-white" />
                   </div>
                   <div className="text-sm">
-                    <span className="font-semibold gradient-text">15,250 ATHR</span>
+                    <span className="font-semibold gradient-text">
+                      {user?.athrBalance !== undefined && user?.athrBalance !== null 
+                        ? (parseFloat(user.athrBalance.toString()) || 0).toFixed(2)
+                        : "0.00"} ATHR
+                    </span>
                   </div>
                 </div>
                 <ThemeToggle />
