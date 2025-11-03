@@ -119,21 +119,18 @@ export default function Wallet() {
           height: { ideal: 720 }
         } 
       });
-      setStream(mediaStream);
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        
-        // انتظار تحميل الفيديو قبل بدء المسح
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play();
-          setIsCameraActive(true);
-          
-          // Start scanning interval بعد تحميل الفيديو
-          const interval = setInterval(scanQRCode, 300);
-          setScanInterval(interval);
-        };
+        await videoRef.current.play();
       }
+      
+      setStream(mediaStream);
+      setIsCameraActive(true);
+      
+      // بدء المسح بعد تشغيل الكاميرا
+      const interval = setInterval(scanQRCode, 300);
+      setScanInterval(interval);
     } catch (error) {
       console.error("Camera error:", error);
       toast({
