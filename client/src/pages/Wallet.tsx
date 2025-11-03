@@ -43,10 +43,16 @@ export default function Wallet() {
   const [athAmount, setAthAmount] = useState("");
   const [athCurrency, setAthCurrency] = useState("USD");
 
-  // Balances
-  const [usdBalance] = useState("125.50");
-  const [sypBalance] = useState("550,000");
-  const [athrBalance] = useState("15,250");
+  // Real balances - stored in state
+  const [usdBalance, setUsdBalance] = useState(1000.00);
+  const [sypBalance, setSypBalance] = useState(5500000);
+  const [athrBalance, setAthrBalance] = useState(15250);
+
+  // ATHR rates (configurable from admin panel)
+  const athRates = {
+    USD: 0.001,
+    SYP: 11,
+  };
 
   const handleCopyAddress = () => {
     navigator.clipboard.writeText(userAddress);
@@ -91,9 +97,21 @@ export default function Wallet() {
     const fee = amount * 0.0005; // 0.05% fee
     const total = amount + fee;
 
+    if (total > usdBalance) {
+      toast({
+        title: "خطأ",
+        description: "الرصيد غير كافي",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Deduct from balance
+    setUsdBalance(prev => prev - total);
+
     toast({
       title: "تم الإرسال بنجاح",
-      description: `تم إرسال ${sendAmount} مع رسوم ${fee.toFixed(2)} (الإجمالي: ${total.toFixed(2)})`,
+      description: `تم إرسال ${sendAmount} USD مع رسوم ${fee.toFixed(2)} USD (الإجمالي: ${total.toFixed(2)} USD)`,
     });
     
     setShowSendDialog(false);
@@ -112,26 +130,103 @@ export default function Wallet() {
     }
 
     const amount = parseFloat(athAmount);
-    const rate = athCurrency === "USD" ? 0.001 : 11;
-    const total = amount * rate;
+    const rate = athRates[athCurrency as keyof typeof athRates];
     
-    if (athAction === "sell") {
-      const fee = total * 0.0005; // 0.05% fee
-      const netAmount = total - fee;
-      toast({
-        title: "تم البيع بنجاح",
-        description: `تم بيع ${athAmount} ATHR مقابل ${netAmount.toFixed(2)} ${athCurrency} (رسوم: ${fee.toFixed(2)})`,
-      });
-    } else {
+    if (athAction === "buy") {
+      const total = amount * rate;
+      
+      if (athCurrency === "USD" && total > usdBalance) {
+        toast({
+          title: "خطأ",
+          description: "رصيد USD غير كافي",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (athCurrency === "SYP" && total > sypBalance) {
+        toast({
+          title: "خطأ",
+          description: "رصيد SYP غير كافي",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Execute buy
+      if (athCurrency === "USD") {
+        setUsdBalance(prev => prev - total);
+      } else {
+        setSypBalance(prev => prev - total);
+      }
+      setAthrBalance(prev => prev + amount);
+
       toast({
         title: "تم الشراء بنجاح",
-        description: `تم شراء ${athAmount} ATHR مقابل ${total.toFixed(2)} ${athCurrency}`,
+        description: `تم شراء ${amount.toFixed(2)} ATHR مقابل ${total.toFixed(2)} ${athCurrency}`,
+      });
+    } else {
+      // Sell
+      if (amount > athrBalance) {
+        toast({
+          title: "خطأ",
+          description: "رصيد ATHR غير كافي",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const totalBeforeFee = amount * rate;
+      const fee = totalBeforeFee * 0.0005; // 0.05% fee
+      const netAmount = totalBeforeFee - fee;
+
+      // Execute sell
+      setAthrBalance(prev => prev - amount);
+      if (athCurrency === "USD") {
+        setUsdBalance(prev => prev + netAmount);
+      } else {
+        setSypBalance(prev => prev + netAmount);
+      }
+
+      toast({
+        title: "تم البيع بنجاح",
+        description: `تم بيع ${amount.toFixed(2)} ATHR مقابل ${netAmount.toFixed(2)} ${athCurrency} (رسوم: ${fee.toFixed(2)} ${athCurrency})`,
       });
     }
     
     setShowATHDialog(false);
     setAthAmount("");
   };
+
+  // Calculate preview for ATH trade
+  const calculateATHPreview = () => {
+    if (!athAmount) return null;
+    
+    const amount = parseFloat(athAmount);
+    const rate = athRates[athCurrency as keyof typeof athRates];
+    
+    if (athAction === "buy") {
+      const total = amount * rate;
+      return {
+        amount: amount.toFixed(2),
+        currency: athCurrency,
+        total: total.toFixed(2),
+        fee: 0,
+      };
+    } else {
+      const totalBeforeFee = amount * rate;
+      const fee = totalBeforeFee * 0.0005;
+      const netAmount = totalBeforeFee - fee;
+      return {
+        amount: amount.toFixed(2),
+        currency: athCurrency,
+        total: netAmount.toFixed(2),
+        fee: fee.toFixed(2),
+      };
+    }
+  };
+
+  const athPreview = calculateATHPreview();
 
   return (
     <div className="space-y-8 max-w-7xl">
@@ -180,7 +275,7 @@ export default function Wallet() {
             <CardTitle className="text-lg gradient-text">USD Balance</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-4xl font-bold tabular-nums">${usdBalance}</div>
+            <div className="text-4xl font-bold tabular-nums">${usdBalance.toFixed(2)}</div>
             <div className="grid grid-cols-3 gap-2">
               <Button
                 onClick={() => setShowSendDialog(true)}
@@ -215,7 +310,7 @@ export default function Wallet() {
             <CardTitle className="text-lg gradient-text">SYP Balance</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-4xl font-bold tabular-nums">{sypBalance} SYP</div>
+            <div className="text-4xl font-bold tabular-nums">{sypBalance.toLocaleString()} SYP</div>
             <div className="grid grid-cols-3 gap-2">
               <Button
                 onClick={() => setShowSendDialog(true)}
@@ -251,9 +346,9 @@ export default function Wallet() {
           <CardTitle className="text-xl gradient-text">ATHR Balance</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-4xl font-bold tabular-nums">{athrBalance} ATHR</div>
+          <div className="text-4xl font-bold tabular-nums">{athrBalance.toFixed(2)} ATHR</div>
           <p className="text-sm text-muted-foreground">
-            1 ATHR = 0.001 USD أو 11 SYP
+            1 ATHR = {athRates.USD} USD أو {athRates.SYP} SYP
           </p>
           <div className="grid grid-cols-2 gap-4">
             <Button
@@ -326,7 +421,7 @@ export default function Wallet() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>المبلغ</Label>
+                  <Label>المبلغ (USD)</Label>
                   <Input
                     type="number"
                     value={sendAmount}
@@ -453,19 +548,49 @@ export default function Wallet() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="p-4 rounded-xl bg-white/50 dark:bg-white/5 border border-white/20">
-              <p className="text-sm">
-                السعر: 1 ATHR = {athCurrency === "USD" ? "0.001 USD" : "11 SYP"}
-              </p>
-              {athAction === "sell" && (
-                <p className="text-xs text-muted-foreground mt-1">رسوم البيع: 0.05%</p>
-              )}
-            </div>
+            
+            {/* Price Preview */}
+            {athPreview && (
+              <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border border-blue-200 dark:border-blue-800">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">الكمية:</span>
+                    <span className="font-bold">{athPreview.amount} ATHR</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">السعر:</span>
+                    <span className="font-bold">
+                      1 ATHR = {athRates[athCurrency as keyof typeof athRates]} {athCurrency}
+                    </span>
+                  </div>
+                  {athAction === "sell" && parseFloat(athPreview.fee) > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">الرسوم (0.05%):</span>
+                      <span className="text-red-600 dark:text-red-400 font-medium">
+                        -{athPreview.fee} {athCurrency}
+                      </span>
+                    </div>
+                  )}
+                  <div className="pt-2 border-t border-blue-200 dark:border-blue-800">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">
+                        {athAction === "buy" ? "المبلغ المطلوب:" : "ستحصل على:"}
+                      </span>
+                      <span className="text-xl font-bold gradient-text">
+                        {athPreview.total} {athCurrency}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <Button
               onClick={handleATHTrade}
               className="w-full rounded-full gradient-primary text-white border-0 shadow-lg"
+              disabled={!athAmount || parseFloat(athAmount) <= 0}
             >
-              {athAction === "buy" ? "شراء" : "بيع"} ATHR
+              {athAction === "buy" ? "تأكيد الشراء" : "تأكيد البيع"}
             </Button>
           </div>
         </DialogContent>

@@ -1,46 +1,21 @@
-import { useState } from "react";
-import MatchCard from "@/components/MatchCard";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Match() {
-  const [matchType, setMatchType] = useState<"chat" | "voice">("chat");
-  const { toast } = useToast();
-
-  const handleMatch = () => {
-    toast({
-      title: "Connecting...",
-      description: `Finding someone for a ${matchType} match`,
-    });
-    console.log("Match initiated:", matchType);
-  };
-
-  const handleNext = () => {
-    toast({
-      description: "Looking for another match...",
-    });
-    console.log("Next match:", matchType);
-  };
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Random Match</h1>
-        <p className="text-muted-foreground">Connect with someone new</p>
+    <div className="space-y-8 max-w-7xl">
+      <div className="relative">
+        <div className="absolute -top-20 -left-20 w-96 h-96 gradient-primary opacity-10 rounded-full blur-3xl" />
+        <h1 className="text-5xl font-bold gradient-text mb-6 relative">Match</h1>
       </div>
 
-      <Tabs defaultValue="chat" onValueChange={(v) => setMatchType(v as "chat" | "voice")}>
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="chat" data-testid="tab-match-chat">Chat Match</TabsTrigger>
-          <TabsTrigger value="voice" data-testid="tab-match-voice">Voice Match</TabsTrigger>
-        </TabsList>
-        <TabsContent value="chat" className="mt-6">
-          <MatchCard type="chat" onMatch={handleMatch} onNext={handleNext} />
-        </TabsContent>
-        <TabsContent value="voice" className="mt-6">
-          <MatchCard type="voice" onMatch={handleMatch} onNext={handleNext} />
-        </TabsContent>
-      </Tabs>
+      <Card className="rounded-3xl border-white/20 dark:border-white/10 backdrop-blur-xl bg-white/70 dark:bg-white/5 shadow-xl">
+        <CardHeader>
+          <CardTitle className="text-xl gradient-text">Match</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">Match content will be available soon.</p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
