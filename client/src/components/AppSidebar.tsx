@@ -24,10 +24,12 @@ import {
   Wallet,
   Store,
   Sparkles,
+  LayoutDashboard,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 const menuItems = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Chat Room", url: "/chat", icon: MessageSquare },
   { title: "Voice Room", url: "/voice", icon: Mic },
   { title: "Match", url: "/match", icon: Shuffle },

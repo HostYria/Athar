@@ -7,6 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/AppSidebar";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotFound from "@/pages/not-found";
+import Dashboard from "@/pages/Dashboard";
 import Wallet from "@/pages/Wallet";
 import ChatRoom from "@/pages/ChatRoom";
 import Match from "@/pages/Match";
@@ -24,7 +25,8 @@ import type { User } from "@shared/schema";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Wallet} />
+      <Route path="/" component={Dashboard} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/wallet" component={Wallet} />
       <Route path="/chat" component={ChatRoom} />
       <Route path="/match" component={Match} />
