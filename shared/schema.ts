@@ -52,6 +52,7 @@ export const insertPasswordResetRequestSchema = createInsertSchema(passwordReset
 });
 
 export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type PasswordResetRequest = typeof passwordResetRequests.$inferSelect;
 export type InsertPasswordResetRequest = z.infer<typeof insertPasswordResetRequestSchema>;

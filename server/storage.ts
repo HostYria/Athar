@@ -17,10 +17,11 @@ export const storage = {
   async createUser(userData: InsertUser): Promise<User> {
     const hashedPassword = await bcrypt.hash(userData.password, 10);
     const walletAddress = this.generateWalletAddress();
+    const { password, ...userDataWithoutPassword } = userData;
     const [user] = await db
       .insert(users)
       .values({
-        ...userData,
+        ...userDataWithoutPassword,
         password: hashedPassword,
         walletAddress,
         usdBalance: "1000.00",
