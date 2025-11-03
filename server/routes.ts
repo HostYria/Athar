@@ -31,7 +31,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input", errors: error.errors });
       }
-      res.status(500).json({ message: "Server error" });
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Server error", error: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 
@@ -58,7 +59,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { password: _, ...userWithoutPassword } = user;
       res.json({ user: userWithoutPassword });
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Server error", error: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 

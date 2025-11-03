@@ -14,9 +14,16 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
+import type { User } from "@shared/schema";
 
-export default function AuthPage() {
+interface AuthPageProps {
+  onAuthSuccess?: (user: User) => void;
+}
+
+export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [view, setView] = useState<"auth" | "reset">("auth");
   
   // Login state
@@ -69,8 +76,16 @@ export default function AuthPage() {
         description: "Login successful!",
       });
       
-      // Handle successful login (e.g., redirect, store user data)
-      console.log("Logged in user:", data.user);
+      // Store user in localStorage
+      localStorage.setItem("user", JSON.stringify(data.user));
+      
+      // Call the onAuthSuccess callback if provided
+      if (onAuthSuccess) {
+        onAuthSuccess(data.user);
+      }
+      
+      // Redirect to wallet page
+      setLocation("/wallet");
     } catch (error) {
       toast({
         title: "Error",
@@ -132,16 +147,19 @@ export default function AuthPage() {
 
       toast({
         title: "Success",
-        description: "Account created successfully!",
+        description: "Account created successfully! Logging you in...",
       });
 
-      // Clear form and switch to login
-      setUsername("");
-      setEmail("");
-      setPassword("");
-      setRepeatPassword("");
-      setBirthday("");
-      setSex("");
+      // Store user in localStorage
+      localStorage.setItem("user", JSON.stringify(data.user));
+      
+      // Call the onAuthSuccess callback if provided
+      if (onAuthSuccess) {
+        onAuthSuccess(data.user);
+      }
+      
+      // Redirect to wallet page
+      setLocation("/wallet");
     } catch (error) {
       toast({
         title: "Error",

@@ -1,4 +1,3 @@
-
 import { db } from "./db";
 import { users, passwordResetRequests, type InsertUser, type User, type PasswordResetRequest, type InsertPasswordResetRequest } from "@shared/schema";
 import { eq, or } from "drizzle-orm";
