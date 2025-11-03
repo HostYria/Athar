@@ -113,22 +113,32 @@ export default function Wallet() {
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "environment" } 
+        video: { 
+          facingMode: "environment",
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
       });
       setStream(mediaStream);
+      
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        videoRef.current.play();
+        
+        // انتظار تحميل الفيديو قبل بدء المسح
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play();
+          setIsCameraActive(true);
+          
+          // Start scanning interval بعد تحميل الفيديو
+          const interval = setInterval(scanQRCode, 300);
+          setScanInterval(interval);
+        };
       }
-      setIsCameraActive(true);
-      
-      // Start scanning interval
-      const interval = setInterval(scanQRCode, 300);
-      setScanInterval(interval);
     } catch (error) {
+      console.error("Camera error:", error);
       toast({
         title: "خطأ",
-        description: "لا يمكن الوصول إلى الكاميرا",
+        description: "لا يمكن الوصول إلى الكاميرا. تأكد من منح الإذن",
         variant: "destructive",
       });
     }
