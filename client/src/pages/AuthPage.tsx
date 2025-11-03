@@ -354,7 +354,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="sex" className="text-sm font-medium">Sex</Label>
+                      <Label htmlFor="sex" className="text-sm font-medium">Gender</Label>
                       <Select value={sex} onValueChange={setSex} disabled={isLoading}>
                         <SelectTrigger id="sex" className="rounded-xl bg-white/50 dark:bg-white/5 backdrop-blur-sm border-white/20" data-testid="select-sex">
                           <SelectValue placeholder="Select" />
